@@ -1,0 +1,65 @@
+import { NextResponse } from "next/server";
+import { hash } from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: Request) {
+    try {
+        const { name, email, password, role } = await req.json();
+
+        if (!name || !email || !password) {
+            return NextResponse.json(
+                { error: "Все поля обязательны" },
+                { status: 400 }
+            );
+        }
+
+        if (password.length < 6) {
+            return NextResponse.json(
+                { error: "Пароль должен содержать минимум 6 символов" },
+                { status: 400 }
+            );
+        }
+
+        const existing = await prisma.user.findUnique({ where: { email } });
+        if (existing) {
+            return NextResponse.json(
+                { error: "Пользователь с таким email уже существует" },
+                { status: 409 }
+            );
+        }
+
+        const passwordHash = await hash(password, 12);
+
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                passwordHash,
+                role: role === "EMPLOYER" ? "EMPLOYER" : "STUDENT",
+            },
+        });
+
+        // If employer, create company skeleton
+        if (role === "EMPLOYER") {
+            await prisma.company.create({
+                data: {
+                    name,
+                    userId: user.id,
+                },
+            });
+        }
+
+        return NextResponse.json(
+            { message: "Регистрация успешна", userId: user.id },
+            { status: 201 }
+        );
+    } catch (error) {
+        console.error("Registration error:", error);
+        return NextResponse.json(
+            { error: "Ошибка сервера" },
+            { status: 500 }
+        );
+    }
+}

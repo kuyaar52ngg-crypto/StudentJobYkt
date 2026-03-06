@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  EMPLOYER
+  ADMIN
+}
+
+enum VacancyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  PENDING
+  INVITED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(STUDENT)
+  university   String?
+  major        String?
+  yearOfStudy  Int?
+  skills       String?
+  interests    String?
+  resumeUrl    String?
+  avatarUrl    String?
+  phone        String?
+  isBlocked    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company      Company?
+  applications Application[]
+  favorites    Favorite[]
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  logo        String?
+  description String?
+  industry    String?
+  contactInfo String?
+  userId      String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id])
+  vacancies Vacancy[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  vacancies Vacancy[]
+}
+
+model Vacancy {
+  id             String        @id @default(cuid())
+  title          String
+  description    String
+  salary         String?
+  salaryMin      Int?
+  salaryMax      Int?
+  schedule       String?
+  employmentType String?
+  location       String?
+  requirements   String?
+  companyId      String
+  categoryId     String?
+  status         VacancyStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  company      Company       @relation(fields: [companyId], references: [id])
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  applications Application[]
+  favorites    Favorite[]
+}
+
+model Application {
+  id        String            @id @default(cuid())
+  status    ApplicationStatus @default(PENDING)
+  userId    String
+  vacancyId String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  vacancy Vacancy @relation(fields: [vacancyId], references: [id])
+
+  @@unique([userId, vacancyId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  vacancyId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  vacancy Vacancy @relation(fields: [vacancyId], references: [id])
+
+  @@unique([userId, vacancyId])
+}

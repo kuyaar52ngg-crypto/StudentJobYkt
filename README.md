@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StudentJobYkt 🎓💼
 
-## Getting Started
+**StudentJobYkt** — это современная платформа для поиска работы и стажировок, созданная специально для студентов в Якутске. Проект помогает молодым специалистам находить первые возможности для карьеры, а работодателям — талантливых и энергичных сотрудников.
 
-First, run the development server:
+## 🚀 Стек технологий
+
+Проект построен на современном и производительном стеке:
+
+- **Frontend**: [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [TailwindCSS](https://tailwindcss.com/)
+- **Backend**: [Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
+- **База данных**: PostgreSQL (через [Prisma ORM](https://www.prisma.io/))
+- **Аутентификация**: [NextAuth.js](https://next-auth.js.org/)
+- **Управление состоянием**: [Zustand](https://docs.pmnd.rs/zustand/)
+- **Анимации**: [GSAP](https://gsap.com/)
+
+## 🛠️ Начало работы
+
+### Предварительные требования
+
+Убедитесь, что у вас установлены:
+- [Node.js](https://nodejs.org/) (версия 18 или выше)
+- [npm](https://www.npmjs.com/), [yarn](https://yarnpkg.com/) или [pnpm](https://pnpm.io/)
+
+### Установка
+
+1. Клонируйте репозиторий:
+   ```bash
+   git clone git@github.com:kuyaar52ngg-crypto/StudentJobYkt.git
+   cd StudentJobYkt
+   ```
+
+2. Установите зависимости:
+   ```bash
+   npm install
+   ```
+
+3. Настройте переменные окружения:
+   Создайте файл `.env` в корне проекта и добавьте необходимые данные (см. `.env.example`, если есть).
+
+4. Запустите миграции базы данных:
+   ```bash
+   npx prisma db push
+   ```
+
+### Запуск в режиме разработки
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000) в браузере, чтобы увидеть результат.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Структура проекта
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app` — Страницы и API роуты (Next.js App Router)
+- `src/components` — Общие React компоненты
+- `prisma` — Схема базы данных и конфигурация Prisma
+- `public` — Статические файлы (изображения, шрифты)
 
-## Learn More
+## 📄 Лицензия
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Этот проект является частной собственностью.

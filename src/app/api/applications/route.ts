@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
             } else if (user.role === "EMPLOYER") {
                 const company = await prisma.company.findUnique({ where: { userId: user.userId } });
                 if (company) {
-                    where.vacancyId = { in: (await prisma.vacancy.findMany({ where: { companyId: company.id }, select: { id: true } })).map(v => v.id) };
+                    where.vacancyId = { in: (await prisma.vacancy.findMany({ where: { companyId: company.id }, select: { id: true } })).map((v: { id: string }) => v.id) };
                 }
             }
 

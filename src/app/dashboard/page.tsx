@@ -1,119 +1,443 @@
 "use client";
 
+import { useAuth } from "@/lib/auth-context";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+
+type Tab = "profile" | "favorites" | "applications";
+
+interface Favorite {
+    id: string;
+    vacancyId: string;
+    vacancy: {
+        id: string;
+        title: string;
+        salary?: string;
+        location?: string;
+        schedule?: string;
+        company: { id: string; name: string; logo?: string };
+    };
+}
+
+interface Application {
+    id: string;
+    status: string;
+    createdAt: string;
+    vacancy: {
+        title: string;
+        company: { name: string };
+    };
+}
+
+const statusColors: Record<string, string> = {
+    PENDING: "bg-yellow-100 text-yellow-800",
+    INVITED: "bg-green-100 text-green-800",
+    REJECTED: "bg-red-100 text-red-800",
+};
+
+const statusLabels: Record<string, string> = {
+    PENDING: "На рассмотрении",
+    INVITED: "Приглашён",
+    REJECTED: "Отказ",
+};
+
+const months = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
 
 export default function DashboardPage() {
-    const { data: session, status } = useSession();
-    const user = session?.user as { id?: string; name?: string; email?: string } | undefined;
+    const { user, loading: authLoading, refresh } = useAuth();
+    const [activeTab, setActiveTab] = useState<Tab>("profile");
 
-    const [counts, setCounts] = useState({ applications: 0, favorites: 0 });
-    const [loading, setLoading] = useState(true);
+    // Profile state
+    const [profile, setProfile] = useState({
+        name: "", phone: "", gender: "", university: "", major: "", skills: "",
+        birthdayDay: "", birthdayMonth: "", birthdayYear: "",
+    });
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [saveMsg, setSaveMsg] = useState("");
 
+    // Favorites state
+    const [favorites, setFavorites] = useState<Favorite[]>([]);
+    const [favsLoading, setFavsLoading] = useState(true);
+
+    // Applications state
+    const [applications, setApplications] = useState<Application[]>([]);
+    const [appsLoading, setAppsLoading] = useState(true);
+
+    // Load profile
     useEffect(() => {
         if (!user?.id) return;
-
-        Promise.all([
-            fetch(`/api/applications?userId=${user.id}`).then(r => r.json()),
-            fetch(`/api/favorites?userId=${user.id}`).then(r => r.json()),
-        ]).then(([appsData, favsData]) => {
-            setCounts({
-                applications: Array.isArray(appsData) ? appsData.length : 0,
-                favorites: Array.isArray(favsData) ? favsData.length : 0,
-            });
-        }).catch(console.error).finally(() => setLoading(false));
+        fetch("/api/auth/me")
+            .then(r => r.json())
+            .then(data => {
+                const bd = data.birthday ? new Date(data.birthday) : null;
+                setProfile({
+                    name: data.name || "",
+                    phone: data.phone || "",
+                    gender: data.gender || "",
+                    university: data.university || "",
+                    major: data.major || "",
+                    skills: data.skills || "",
+                    birthdayDay: bd ? String(bd.getDate()) : "",
+                    birthdayMonth: bd ? String(bd.getMonth()) : "",
+                    birthdayYear: bd ? String(bd.getFullYear()) : "",
+                });
+            })
+            .catch(console.error)
+            .finally(() => setProfileLoading(false));
     }, [user?.id]);
 
-    if (status === "loading") {
-        return <div className="max-w-5xl mx-auto p-8"><div className="animate-pulse h-8 w-48 bg-gray-200 rounded mb-6"></div></div>;
+    // Load favorites when tab selected
+    const loadFavorites = useCallback(() => {
+        if (!user?.id) return;
+        setFavsLoading(true);
+        fetch("/api/favorites")
+            .then(r => r.json())
+            .then(data => { if (Array.isArray(data)) setFavorites(data); })
+            .catch(console.error)
+            .finally(() => setFavsLoading(false));
+    }, [user?.id]);
+
+    // Load applications when tab selected
+    const loadApplications = useCallback(() => {
+        if (!user?.id) return;
+        setAppsLoading(true);
+        fetch("/api/applications")
+            .then(r => r.json())
+            .then(data => { if (Array.isArray(data)) setApplications(data); })
+            .catch(console.error)
+            .finally(() => setAppsLoading(false));
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (activeTab === "favorites") loadFavorites();
+        if (activeTab === "applications") loadApplications();
+    }, [activeTab, loadFavorites, loadApplications]);
+
+    const handleSaveProfile = async () => {
+        setSaving(true);
+        setSaveMsg("");
+        try {
+            let birthday: string | null = null;
+            if (profile.birthdayDay && profile.birthdayMonth !== "" && profile.birthdayYear) {
+                birthday = new Date(
+                    parseInt(profile.birthdayYear),
+                    parseInt(profile.birthdayMonth),
+                    parseInt(profile.birthdayDay)
+                ).toISOString();
+            }
+            const res = await fetch("/api/auth/me", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: profile.name,
+                    phone: profile.phone,
+                    gender: profile.gender,
+                    university: profile.university,
+                    major: profile.major,
+                    skills: profile.skills,
+                    birthday,
+                }),
+            });
+            if (res.ok) {
+                setSaveMsg("Данные сохранены!");
+                refresh();
+            } else {
+                setSaveMsg("Ошибка сохранения");
+            }
+        } catch {
+            setSaveMsg("Ошибка сети");
+        } finally {
+            setSaving(false);
+            setTimeout(() => setSaveMsg(""), 3000);
+        }
+    };
+
+    const removeFavorite = async (vacancyId: string) => {
+        try {
+            await fetch(`/api/favorites?vacancyId=${vacancyId}`, { method: "DELETE" });
+            setFavorites(prev => prev.filter(f => f.vacancyId !== vacancyId));
+        } catch (e) { console.error(e); }
+    };
+
+    if (authLoading) {
+        return <div className="max-w-3xl mx-auto p-8"><div className="animate-pulse h-8 w-48 bg-gray-200 rounded mb-6"></div></div>;
+    }
+    if (!user) {
+        return <div className="max-w-3xl mx-auto p-8 text-center text-red-500">Пожалуйста, войдите в систему</div>;
     }
 
-    if (!session) {
-        return <div className="max-w-5xl mx-auto p-8 text-center text-red-500">Пожалуйста, войдите в систему</div>;
-    }
+    const initials = (user.name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+    const tabs: { key: Tab; label: string; icon: string }[] = [
+        { key: "profile", label: "Мои данные", icon: "👤" },
+        { key: "favorites", label: "Избранные вакансии", icon: "⭐" },
+        { key: "applications", label: "Мои отклики", icon: "📋" },
+    ];
 
     return (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold mb-6">Добро пожаловать, {user?.name || "Студент"}!</h1>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-2xl font-bold mb-6">Личный кабинет</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Profile card */}
-                <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-2xl bg-[var(--accent-blue)] flex items-center justify-center text-2xl">
-                            👨‍🎓
-                        </div>
-                        <div>
-                            <h2 className="font-semibold">Мой профиль</h2>
-                            <p className="text-xs text-[var(--muted)]">{user?.email}</p>
-                        </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                        Заполните профиль, чтобы работодатели могли найти вас.
-                    </p>
-                    <Link
-                        href="/dashboard/profile"
-                        className="text-sm text-[var(--primary)] hover:underline font-medium"
+            {/* Tab buttons */}
+            <div className="flex gap-2 mb-6 flex-wrap">
+                {tabs.map(t => (
+                    <button
+                        key={t.key}
+                        onClick={() => setActiveTab(t.key)}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            activeTab === t.key
+                                ? "bg-[var(--primary)] text-white shadow-md"
+                                : "bg-[var(--card-bg)] text-[var(--foreground)] shadow-[var(--card-shadow)] hover:shadow-md"
+                        }`}
                     >
-                        Редактировать →
-                    </Link>
-                </div>
-
-                {/* Applications card */}
-                <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-2xl bg-[var(--accent-green)] flex items-center justify-center text-2xl relative">
-                            📋
-                            {!loading && counts.applications > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
-                                    {counts.applications}
-                                </span>
-                            )}
-                        </div>
-                        <div>
-                            <h2 className="font-semibold">Мои отклики</h2>
-                            <p className="text-xs text-[var(--muted)]">Отслеживание статусов</p>
-                        </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                        Просматривайте статусы ваших откликов на вакансии.
-                    </p>
-                    <Link
-                        href="/dashboard/applications"
-                        className="text-sm text-[var(--primary)] hover:underline font-medium"
-                    >
-                        Посмотреть →
-                    </Link>
-                </div>
-
-                {/* Favorites card */}
-                <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-2xl bg-[var(--accent-pink)] flex items-center justify-center text-2xl relative">
-                            ⭐
-                            {!loading && counts.favorites > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
-                                    {counts.favorites}
-                                </span>
-                            )}
-                        </div>
-                        <div>
-                            <h2 className="font-semibold">Избранное</h2>
-                            <p className="text-xs text-[var(--muted)]">Сохранённые вакансии</p>
-                        </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                        Вакансии, которые вы сохранили для рассмотрения.
-                    </p>
-                    <Link
-                        href="/vacancies"
-                        className="text-sm text-[var(--primary)] hover:underline font-medium"
-                    >
-                        Смотреть →
-                    </Link>
-                </div>
+                        <span>{t.icon}</span>
+                        {t.label}
+                    </button>
+                ))}
             </div>
+
+            {/* Profile Tab */}
+            {activeTab === "profile" && (
+                <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6 sm:p-8 animate-fade-in-up">
+                    <h2 className="text-xl font-bold mb-6">Личная информация</h2>
+
+                    {/* Avatar */}
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center text-white text-xl font-bold">
+                            {initials}
+                        </div>
+                        <span className="text-sm text-[var(--primary)] cursor-pointer hover:underline">Добавить фото</span>
+                    </div>
+
+                    {profileLoading ? (
+                        <div className="space-y-4">
+                            {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />)}
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Name */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">Ваше имя</label>
+                                <input
+                                    type="text"
+                                    value={profile.name}
+                                    onChange={e => setProfile({...profile, name: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="Иванов Иван"
+                                />
+                                <p className="text-xs text-[var(--muted)] mt-1">Имя отображается рядом с логином</p>
+                            </div>
+
+                            {/* Birthday */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">День рождения</label>
+                                <div className="flex gap-2 flex-wrap">
+                                    <select
+                                        value={profile.birthdayDay}
+                                        onChange={e => setProfile({...profile, birthdayDay: e.target.value})}
+                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                    >
+                                        <option value="">День</option>
+                                        {Array.from({length: 31}, (_, i) => (
+                                            <option key={i+1} value={String(i+1)}>{i+1}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        value={profile.birthdayMonth}
+                                        onChange={e => setProfile({...profile, birthdayMonth: e.target.value})}
+                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                    >
+                                        <option value="">Месяц</option>
+                                        {months.map((m, i) => (
+                                            <option key={i} value={String(i)}>{m}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        value={profile.birthdayYear}
+                                        onChange={e => setProfile({...profile, birthdayYear: e.target.value})}
+                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                    >
+                                        <option value="">Год</option>
+                                        {Array.from({length: 30}, (_, i) => {
+                                            const y = 2010 - i;
+                                            return <option key={y} value={String(y)}>{y}</option>;
+                                        })}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Gender */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Пол</label>
+                                <div className="space-y-2">
+                                    {[{v: "male", l: "Мужской"}, {v: "female", l: "Женский"}, {v: "", l: "Не выбрано"}].map(g => (
+                                        <label key={g.v} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="gender"
+                                                checked={profile.gender === g.v}
+                                                onChange={() => setProfile({...profile, gender: g.v})}
+                                                className="w-4 h-4 accent-[var(--primary)]"
+                                            />
+                                            <span className="text-sm">{g.l}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Phone */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">Телефон</label>
+                                <input
+                                    type="tel"
+                                    value={profile.phone}
+                                    onChange={e => setProfile({...profile, phone: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="+7 (999) 123-45-67"
+                                />
+                            </div>
+
+                            {/* University */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">Университет</label>
+                                <input
+                                    type="text"
+                                    value={profile.university}
+                                    onChange={e => setProfile({...profile, university: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="СВФУ, ЯГУ и т.д."
+                                />
+                            </div>
+
+                            {/* Major */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">Специальность</label>
+                                <input
+                                    type="text"
+                                    value={profile.major}
+                                    onChange={e => setProfile({...profile, major: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="Программная инженерия"
+                                />
+                            </div>
+
+                            {/* Skills */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1.5">Навыки</label>
+                                <input
+                                    type="text"
+                                    value={profile.skills}
+                                    onChange={e => setProfile({...profile, skills: e.target.value})}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="React, TypeScript, Python..."
+                                />
+                            </div>
+
+                            {/* Save button */}
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={handleSaveProfile}
+                                    disabled={saving}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+                                >
+                                    {saving ? "Сохранение..." : "Сохранить"}
+                                </button>
+                                {saveMsg && (
+                                    <span className={`text-sm ${saveMsg.includes("Ошибка") ? "text-red-500" : "text-green-600"}`}>
+                                        {saveMsg}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Favorites Tab */}
+            {activeTab === "favorites" && (
+                <div className="animate-fade-in-up">
+                    <h2 className="text-xl font-bold mb-4">Избранные вакансии</h2>
+                    {favsLoading ? (
+                        <div className="space-y-4">
+                            {[1,2,3].map(i => <div key={i} className="h-20 bg-[var(--card-bg)] rounded-[var(--radius-card)] animate-pulse" />)}
+                        </div>
+                    ) : favorites.length === 0 ? (
+                        <div className="text-center py-12 text-[var(--muted)]">
+                            <p className="text-4xl mb-3">⭐</p>
+                            <p>У вас пока нет избранных вакансий</p>
+                            <Link href="/vacancies" className="text-[var(--primary)] hover:underline mt-2 inline-block text-sm">
+                                Искать вакансии →
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {favorites.map(fav => (
+                                <div
+                                    key={fav.id}
+                                    className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                >
+                                    <div>
+                                        <Link href={`/vacancies/${fav.vacancy.id}`} className="font-semibold text-sm hover:text-[var(--primary)] transition-colors">
+                                            {fav.vacancy.title}
+                                        </Link>
+                                        <p className="text-xs text-[var(--muted)]">
+                                            {fav.vacancy.company.name}
+                                            {fav.vacancy.salary && ` · ${fav.vacancy.salary}`}
+                                            {fav.vacancy.location && ` · ${fav.vacancy.location}`}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => removeFavorite(fav.vacancyId)}
+                                        className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors self-start sm:self-center"
+                                    >
+                                        Удалить ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Applications Tab */}
+            {activeTab === "applications" && (
+                <div className="animate-fade-in-up">
+                    <h2 className="text-xl font-bold mb-4">Мои отклики</h2>
+                    {appsLoading ? (
+                        <div className="space-y-4">
+                            {[1,2,3].map(i => <div key={i} className="h-20 bg-[var(--card-bg)] rounded-[var(--radius-card)] animate-pulse" />)}
+                        </div>
+                    ) : applications.length === 0 ? (
+                        <div className="text-center py-12 text-[var(--muted)]">
+                            <p className="text-4xl mb-3">📋</p>
+                            <p>Вы пока не откликнулись ни на одну вакансию</p>
+                            <Link href="/vacancies" className="text-[var(--primary)] hover:underline mt-2 inline-block text-sm">
+                                Искать вакансии →
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {applications.map(app => (
+                                <div
+                                    key={app.id}
+                                    className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                >
+                                    <div>
+                                        <h3 className="font-semibold text-sm">{app.vacancy.title}</h3>
+                                        <p className="text-xs text-[var(--muted)]">
+                                            {app.vacancy.company.name} · {new Date(app.createdAt).toLocaleDateString("ru-RU")}
+                                        </p>
+                                    </div>
+                                    <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full ${statusColors[app.status] || "bg-gray-100"}`}>
+                                        {statusLabels[app.status] || app.status}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

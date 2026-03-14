@@ -1,0 +1,26 @@
+
+> student-job-ykt@0.1.0 build
+> next build
+
+тЦ▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+тЬУ Compiled successfully in 2.1s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+Error [PrismaClientConstructorValidationError]: Using engine type "client" requires either "adapter" or "accelerateUrl" to be provided to PrismaClient constructor.
+Read more at https://pris.ly/d/client-constructor
+    at module evaluation (C:\Users\Admin\Music\StudentJobYkt\.next\server\chunks\[root-of-the-server]__9a8ef65f._.js:1:1228)
+    at instantiateModule (C:\Users\Admin\Music\StudentJobYkt\.next\server\chunks\[turbopack]_runtime.js:740:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Admin\Music\StudentJobYkt\.next\server\chunks\[turbopack]_runtime.js:763:12)
+    at Context.esmImport [as i] (C:\Users\Admin\Music\StudentJobYkt\.next\server\chunks\[turbopack]_runtime.js:228:20)
+    at module evaluation (C:\Users\Admin\Music\StudentJobYkt\.next\server\chunks\[root-of-the-server]__9a8ef65f._.js:1:1628)
+    at instantiateModule (C:\Users\Admin\Music\StudentJobYkt\.next\server\chunks\[turbopack]_runtime.js:740:9)
+    at instantiateRuntimeModule (C:\Users\Admin\Music\StudentJobYkt\.next\server\chunks\[turbopack]_runtime.js:768:12)
+
+> Build error occurred
+Error: Failed to collect page data for /api/auth/me
+    at ignore-listed frames {
+  type: 'Error'
+}

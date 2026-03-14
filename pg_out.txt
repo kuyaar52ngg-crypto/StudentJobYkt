@@ -1,0 +1,2 @@
+Pooler port 6543 connection FAILED: Tenant or user not found
+Direct port 5432 connection FAILED: Tenant or user not found

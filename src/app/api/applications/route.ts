@@ -1,20 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserFromRequest } from "@/lib/jwt-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
-        const { userId, vacancyId } = await req.json();
-
-        if (!userId || !vacancyId) {
-            return NextResponse.json(
-                { error: "userId and vacancyId are required" },
-                { status: 400 }
-            );
+        const user = getUserFromRequest(req);
+        if (!user || user.role !== "STUDENT") {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Check if already applied
+        const { vacancyId } = await req.json();
+        const userId = user.userId;
+
+        if (!vacancyId) {
+            return NextResponse.json({ error: "vacancyId required" }, { status: 400 });
+        }
+
         const existing = await prisma.application.findUnique({
             where: { userId_vacancyId: { userId, vacancyId } },
         });
@@ -37,30 +40,57 @@ export async function POST(req: Request) {
     }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     try {
-        const { searchParams } = new URL(req.url);
-        const userId = searchParams.get("userId");
-        const vacancyId = searchParams.get("vacancyId");
+        const user = getUserFromRequest(req);
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        const where: Record<string, string> = {};
-        if (userId) where.userId = userId;
-        if (vacancyId) where.vacancyId = vacancyId;
-
-        const applications = await prisma.application.findMany({
-            where,
-            include: {
-                user: { select: { id: true, name: true, email: true, university: true, resumeUrl: true } },
-                vacancy: {
-                    include: {
-                        company: { select: { id: true, name: true, logo: true } },
+        if (user.role === "STUDENT") {
+            const applications = await prisma.application.findMany({
+                where: { userId: user.userId },
+                include: {
+                    user: { select: { id: true, name: true, email: true, university: true, resumeUrl: true } },
+                    vacancy: {
+                        include: {
+                            company: { select: { id: true, name: true, logo: true } },
+                        },
                     },
                 },
-            },
-            orderBy: { createdAt: "desc" },
-        });
+                orderBy: { createdAt: "desc" },
+            });
+            return NextResponse.json(applications);
+        } else if (user.role === "EMPLOYER" || user.role === "ADMIN") {
+            const { searchParams } = new URL(req.url);
+            const vacancyId = searchParams.get("vacancyId");
+            
+            const where: any = {};
+            if (vacancyId) {
+                where.vacancyId = vacancyId;
+            } else if (user.role === "EMPLOYER") {
+                const company = await prisma.company.findUnique({ where: { userId: user.userId } });
+                if (company) {
+                    where.vacancyId = { in: (await prisma.vacancy.findMany({ where: { companyId: company.id }, select: { id: true } })).map(v => v.id) };
+                }
+            }
 
-        return NextResponse.json(applications);
+            const applications = await prisma.application.findMany({
+                where,
+                include: {
+                    user: { select: { id: true, name: true, email: true, university: true, resumeUrl: true } },
+                    vacancy: {
+                        include: {
+                            company: { select: { id: true, name: true, logo: true } },
+                        },
+                    },
+                },
+                orderBy: { createdAt: "desc" },
+            });
+            return NextResponse.json(applications);
+        }
+
+        return NextResponse.json([]);
     } catch (error) {
         console.error("Applications GET error:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });

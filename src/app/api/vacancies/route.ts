@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserFromRequest } from "@/lib/jwt-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const q = searchParams.get("q") || "";
@@ -45,14 +46,20 @@ export async function GET(req: Request) {
         });
 
         return NextResponse.json(vacancies);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Vacancies GET error:", error);
-        return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
+        return NextResponse.json({ error: "Ошибка сервера", message: error.message, stack: error.stack }, { status: 500 });
     }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
+        const user = getUserFromRequest(req);
+        if (!user || user.role !== "EMPLOYER") {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const userId = user.userId;
+
         const body = await req.json();
         const {
             title,
@@ -64,13 +71,12 @@ export async function POST(req: Request) {
             employmentType,
             location,
             requirements,
-            userId,
             categoryId,
         } = body;
 
-        if (!title || !description || !userId) {
+        if (!title || !description) {
             return NextResponse.json(
-                { error: "Заголовок, описание и автор обязательны" },
+                { error: "Заголовок и описание обязательны" },
                 { status: 400 }
             );
         }

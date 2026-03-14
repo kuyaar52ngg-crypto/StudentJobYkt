@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
+import Image from "next/image";
 
 const navLinks = [
     { href: "/", label: "Поиск работы" },
     { href: "/vacancies", label: "Вакансии" },
-    { href: "/about", label: "О нас" },
-    { href: "/faq", label: "FAQ" },
 ];
 
 const roleLinks: Record<string, { href: string; label: string }> = {
@@ -21,8 +20,8 @@ const roleLinks: Record<string, { href: string; label: string }> = {
 export default function Header() {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
-    const { data: session, status } = useSession();
-    const user = session?.user as { name?: string; role?: string } | undefined;
+    const { user, loading: currentLoading, logout } = useAuth();
+    const status = currentLoading ? "loading" : user ? "authenticated" : "unauthenticated";
 
     return (
         <header className="bg-[var(--header-dark)] text-white sticky top-0 z-50">
@@ -31,9 +30,13 @@ export default function Header() {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 shrink-0">
-                        <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white font-bold text-sm">
-                            SJ
-                        </div>
+                        <Image
+                            src="/logo.jpg"
+                            alt="SJ Logo"
+                            width={32}
+                            height={32}
+                            className="rounded-lg object-cover"
+                        />
                         <span className="text-lg font-bold tracking-tight hidden sm:inline">
                             StudentJobYkt
                         </span>
@@ -69,7 +72,7 @@ export default function Header() {
                         {/* Auth area */}
                         {status === "loading" ? (
                             <div className="w-20 h-8 bg-white/10 rounded-lg animate-pulse" />
-                        ) : session && user ? (
+                        ) : user ? (
                             <div className="flex items-center gap-3">
                                 {/* Role-based cabinet link */}
                                 {user.role && roleLinks[user.role] && (
@@ -87,7 +90,7 @@ export default function Header() {
                                 {/* Sign out */}
                                 <button
                                     id="header-signout"
-                                    onClick={() => signOut({ callbackUrl: "/" })}
+                                    onClick={logout}
                                     className="bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors"
                                 >
                                     Выйти
@@ -143,7 +146,7 @@ export default function Header() {
                                 {link.label}
                             </Link>
                         ))}
-                        {session && user?.role && roleLinks[user.role] && (
+                        {user && user?.role && roleLinks[user.role] && (
                             <Link
                                 href={roleLinks[user.role].href}
                                 onClick={() => setMobileOpen(false)}

@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const fs = require('fs'); const prisma = new PrismaClient(); prisma.user.findFirst().catch(err => { fs.writeFileSync('prisma-err.txt', String(err.message)); }).finally(() => process.exit(1));

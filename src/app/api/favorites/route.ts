@@ -1,12 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserFromRequest } from "@/lib/jwt-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get("userId");
+        let userId = searchParams.get("userId");
+        
+        if (!userId) {
+            const user = getUserFromRequest(req);
+            if (user) userId = user.userId;
+        }
 
         if (!userId) {
             return NextResponse.json({ error: "userId is required" }, { status: 400 });
@@ -31,9 +37,15 @@ export async function GET(req: Request) {
     }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
-        const { userId, vacancyId } = await req.json();
+        const body = await req.json();
+        let { userId, vacancyId } = body;
+
+        if (!userId) {
+            const user = getUserFromRequest(req);
+            if (user) userId = user.userId;
+        }
 
         if (!userId || !vacancyId) {
             return NextResponse.json(
@@ -64,11 +76,16 @@ export async function POST(req: Request) {
     }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get("userId");
+        let userId = searchParams.get("userId");
         const vacancyId = searchParams.get("vacancyId");
+
+        if (!userId) {
+            const user = getUserFromRequest(req);
+            if (user) userId = user.userId;
+        }
 
         if (!userId || !vacancyId) {
             return NextResponse.json(

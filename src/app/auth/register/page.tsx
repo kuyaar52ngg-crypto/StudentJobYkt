@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -67,9 +68,13 @@ export default function RegisterPage() {
             <div className="w-full max-w-md">
                 <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-8">
                     <div className="text-center mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-[var(--primary)] flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">
-                            SJ
-                        </div>
+                        <Image
+                            src="/logo.jpg"
+                            alt="SJ Logo"
+                            width={48}
+                            height={48}
+                            className="rounded-2xl object-cover mx-auto mb-4"
+                        />
                         <h1 className="text-2xl font-bold">Регистрация</h1>
                         <p className="text-sm text-[var(--muted)] mt-2">
                             Создайте аккаунт для начала поиска работы

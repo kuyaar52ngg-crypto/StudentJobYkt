@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function LoginPage() {
-    const router = useRouter();
+    const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -17,19 +17,22 @@ export default function LoginPage() {
         setError("");
         setLoading(true);
 
-        const result = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-        });
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
 
-        setLoading(false);
-
-        if (result?.error) {
-            setError("Неверный email или пароль");
-        } else {
-            router.push("/dashboard");
-            router.refresh();
+            if (!res.ok) {
+                const data = await res.json();
+                setError(data.error || "Неверный email или пароль");
+            } else {
+                const user = await res.json();
+                await login(user);
+            }
+        } catch (err) {
+            setError("Ошибка сервера");
         }
     };
 
@@ -38,9 +41,13 @@ export default function LoginPage() {
             <div className="w-full max-w-md">
                 <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-8">
                     <div className="text-center mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-[var(--primary)] flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">
-                            SJ
-                        </div>
+                        <Image
+                            src="/logo.jpg"
+                            alt="SJ Logo"
+                            width={48}
+                            height={48}
+                            className="rounded-2xl object-cover mx-auto mb-4"
+                        />
                         <h1 className="text-2xl font-bold">Вход в аккаунт</h1>
                         <p className="text-sm text-[var(--muted)] mt-2">
                             Войдите, чтобы начать поиск работы

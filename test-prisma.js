@@ -1,17 +1,16 @@
-require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
+const fs = require("fs");
+
+let output = "";
+output += "PrismaClient source: " + PrismaClient.toString() + "\n";
+output += "!{} is " + !{} + "\n";
 
 try {
-    const prisma = new PrismaClient();
-
-    prisma.user.count().then(c => {
-        console.log("Users:", c);
-        process.exit(0);
-    }).catch(e => {
-        console.error(e.message);
-        process.exit(1);
-    });
-} catch (e) {
-    console.error(e.message);
-    process.exit(1);
+  let n = {};
+  const prisma1 = new PrismaClient(n);
+  output += "PrismaClient({}) succeeded\n";
+} catch (err) {
+  output += "PrismaClient({}) failed: " + err.message + "\n";
 }
+
+fs.writeFileSync("output-test.txt", output);

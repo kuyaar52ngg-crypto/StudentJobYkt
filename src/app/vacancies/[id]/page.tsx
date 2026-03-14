@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import Badge from "@/components/ui/Badge";
 import Link from "next/link";
 
@@ -21,8 +21,7 @@ interface VacancyDetail {
 
 export default function VacancyDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { data: session } = useSession();
-    const user = session?.user as { id?: string; role?: string } | undefined;
+    const { user } = useAuth();
 
     const [vacancy, setVacancy] = useState<VacancyDetail | null>(null);
     const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useState, useEffect } from "react";
 
 interface Application {
@@ -27,8 +27,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function ApplicationsPage() {
-    const { data: session } = useSession();
-    const user = session?.user as { id?: string } | undefined;
+    const { user } = useAuth();
 
     const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 
 interface Stats {
     users: number;
@@ -18,7 +18,8 @@ interface PendingVacancy {
 }
 
 export default function AdminDashboardPage() {
-    const { data: session, status } = useSession();
+    const { user, loading: authLoading } = useAuth();
+    const status = authLoading ? "loading" : user ? "authenticated" : "unauthenticated";
 
     const [stats, setStats] = useState<Stats>({ users: 0, vacancies: 0, applications: 0, conversionRate: 0 });
     const [statsLoading, setStatsLoading] = useState(true);
@@ -45,7 +46,7 @@ export default function AdminDashboardPage() {
     };
 
     if (status === "loading") return <div className="p-8">Загрузка...</div>;
-    if (session?.user && (session.user as { role?: string }).role !== "ADMIN") return <div className="p-8 text-red-500">Доступ запрещен</div>;
+    if (user && user.role !== "ADMIN") return <div className="p-8 text-red-500">Доступ запрещен</div>;
 
     const statCards = [
         { label: "Пользователей", value: stats.users, icon: "👥", color: "bg-[var(--accent-blue)]" },

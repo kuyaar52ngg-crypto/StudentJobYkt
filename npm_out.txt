@@ -1,0 +1,5 @@
+student-job-ykt@0.1.0 C:\Users\Admin\Music\StudentJobYkt
+тФЬтФАтФм @prisma/client@7.4.2
+тФВ тФФтФАтФА prisma@7.4.2 deduped
+тФФтФАтФА prisma@7.4.2
+

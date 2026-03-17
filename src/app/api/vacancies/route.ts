@@ -24,14 +24,20 @@ export async function GET(req: NextRequest) {
         }
 
         if (schedule) {
-            where.schedule = { in: schedule.split(",") };
+            const values = schedule.split(",").map(v => v.trim()).filter(Boolean);
+            if (values.length > 0) {
+                where.schedule = { in: values };
+            }
         }
 
         if (employmentType) {
-            where.employmentType = { in: employmentType.split(",") };
+            const values = employmentType.split(",").map(v => v.trim()).filter(Boolean);
+            if (values.length > 0) {
+                where.employmentType = { in: values };
+            }
         }
 
-        if (categoryId) {
+        if (categoryId && categoryId !== "all") {
             where.categoryId = categoryId;
         }
 

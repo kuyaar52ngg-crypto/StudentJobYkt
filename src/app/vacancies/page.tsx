@@ -24,6 +24,7 @@ function VacanciesContent() {
     const searchParams = useSearchParams();
     const [vacancies, setVacancies] = useState<Vacancy[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState<Record<string, string[]>>({});
 
     useEffect(() => {
@@ -40,12 +41,18 @@ function VacanciesContent() {
             }
 
             setLoading(true);
+            setError(null);
             try {
                 const r = await fetch(`/api/vacancies?${params.toString()}`);
                 const data = await r.json();
-                if (Array.isArray(data)) setVacancies(data);
+                if (r.ok) {
+                    if (Array.isArray(data)) setVacancies(data);
+                } else {
+                    setError(data.error || "Ошибка при загрузке вакансий");
+                }
             } catch (err) {
                 console.error(err);
+                setError("Ошибка сети или сервера");
             } finally {
                 setLoading(false);
             }
@@ -84,6 +91,16 @@ function VacanciesContent() {
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <div key={i} className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 h-48 animate-pulse" />
                                 ))}
+                            </div>
+                        ) : error ? (
+                            <div className="text-center py-16 bg-red-50 rounded-2xl border border-red-100">
+                                <p className="text-red-500 font-medium">{error}</p>
+                                <button 
+                                    onClick={() => window.location.reload()}
+                                    className="mt-4 text-sm text-[var(--primary)] hover:underline"
+                                >
+                                    Попробовать еще раз
+                                </button>
                             </div>
                         ) : vacancies.length === 0 ? (
                             <div className="text-center py-16 text-[var(--muted)]">

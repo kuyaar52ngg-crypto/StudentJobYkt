@@ -87,6 +87,7 @@ model Vacancy {
   companyId      String
   categoryId     String?
   status         VacancyStatus @default(PENDING)
+  isBanner       Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

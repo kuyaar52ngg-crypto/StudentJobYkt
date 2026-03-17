@@ -24,11 +24,19 @@ function VacanciesContent() {
     const searchParams = useSearchParams();
     const [vacancies, setVacancies] = useState<Vacancy[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState<Record<string, string[]>>({});
 
     useEffect(() => {
         const params = new URLSearchParams();
         const q = searchParams.get("q");
         if (q) params.set("q", q);
+        
+        if (filters.schedule && filters.schedule.length > 0) {
+            params.set("schedule", filters.schedule.join(","));
+        }
+        if (filters.employmentType && filters.employmentType.length > 0) {
+            params.set("employmentType", filters.employmentType.join(","));
+        }
 
         setLoading(true);
         fetch(`/api/vacancies?${params.toString()}`)
@@ -38,7 +46,7 @@ function VacanciesContent() {
             })
             .catch(console.error)
             .finally(() => setLoading(false));
-    }, [searchParams]);
+    }, [searchParams, filters]);
 
     return (
         <>
@@ -53,7 +61,7 @@ function VacanciesContent() {
             {/* Content */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
-                    <FilterSidebar />
+                    <FilterSidebar onFilterChange={setFilters} />
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-6">
                             <p className="text-sm text-[var(--muted)]">

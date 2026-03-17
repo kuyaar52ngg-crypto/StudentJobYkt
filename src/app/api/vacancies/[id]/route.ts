@@ -36,7 +36,7 @@ export async function PUT(
 ) {
     try {
         const user = getUserFromRequest(req);
-        if (!user || user.role !== "EMPLOYER") {
+        if (!user || (user.role !== "EMPLOYER" && user.role !== "ADMIN")) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -53,7 +53,7 @@ export async function PUT(
             return NextResponse.json({ error: "Не найдено" }, { status: 404 });
         }
 
-        if (vacancy.company.userId !== user.userId) {
+        if (user.role !== "ADMIN" && vacancy.company.userId !== user.userId) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 

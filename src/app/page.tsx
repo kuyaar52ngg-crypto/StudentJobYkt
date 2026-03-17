@@ -22,16 +22,26 @@ const accentColors: Array<"blue" | "pink" | "orange" | "green" | "purple"> = [
 export default function HomePage() {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    fetch("/api/vacancies")
+    const params = new URLSearchParams();
+    if (filters.schedule && filters.schedule.length > 0) {
+      params.set("schedule", filters.schedule.join(","));
+    }
+    if (filters.employmentType && filters.employmentType.length > 0) {
+      params.set("employmentType", filters.employmentType.join(","));
+    }
+
+    setLoading(true);
+    fetch(`/api/vacancies?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) setVacancies(data.slice(0, 6));
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [filters]);
 
   return (
     <>
@@ -72,7 +82,7 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <FilterSidebar />
+          <FilterSidebar onFilterChange={setFilters} />
 
           {/* Vacancies */}
           <div className="flex-1 min-w-0">

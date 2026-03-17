@@ -48,7 +48,11 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(vacancies);
     } catch (error: any) {
         console.error("Vacancies GET error:", error);
-        return NextResponse.json({ error: "Ошибка сервера", message: error.message, stack: error.stack }, { status: 500 });
+        return NextResponse.json({ 
+            error: `Ошибка сервера: ${error.message}`, 
+            message: error.message, 
+            stack: error.stack 
+        }, { status: 500 });
     }
 }
 
@@ -114,9 +118,9 @@ export async function POST(req: NextRequest) {
             cause: error.cause
         });
         return NextResponse.json({ 
-            error: "Ошибка сервера", 
+            error: `Ошибка сервера: ${error.message}`, 
             details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            stack: error.stack
         }, { status: 500 });
     }
 }

@@ -27,8 +27,12 @@ export async function GET(req: Request) {
         });
 
         return NextResponse.json(vacancies);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Employer vacancies GET error:", error);
-        return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
+        return NextResponse.json({ 
+            error: `Ошибка сервера: ${error.message}`,
+            details: error.message,
+            stack: error.stack
+        }, { status: 500 });
     }
 }

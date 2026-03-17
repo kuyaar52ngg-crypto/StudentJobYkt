@@ -7,17 +7,17 @@ interface FilterSidebarProps {
 }
 
 const scheduleOptions = [
-    { value: "FULL_TIME", label: "Полная занятость" },
-    { value: "PART_TIME", label: "Частичная занятость" },
-    { value: "INTERNSHIP", label: "Стажировка" },
-    { value: "PROJECT", label: "Проектная работа" },
-    { value: "REMOTE", label: "Удалённая работа" },
+    { value: "Полная занятость", label: "Полная занятость" },
+    { value: "Частичная занятость", label: "Частичная занятость" },
+    { value: "Стажировка", label: "Стажировка" },
+    { value: "Проектная работа", label: "Проектная работа" },
+    { value: "Удалённая работа", label: "Удалённая работа" },
 ];
 
 const employmentOptions = [
-    { value: "VACANCY", label: "Вакансия" },
-    { value: "INTERNSHIP", label: "Стажировка" },
-    { value: "PRACTICE", label: "Практика" },
+    { value: "Вакансия", label: "Вакансия" },
+    { value: "Стажировка", label: "Стажировка" },
+    { value: "Практика", label: "Практика" },
 ];
 
 export default function FilterSidebar({ onFilterChange }: FilterSidebarProps) {

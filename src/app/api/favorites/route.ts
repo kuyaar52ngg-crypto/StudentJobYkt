@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
             orderBy: { createdAt: "desc" }
         });
 
-        return NextResponse.json(favorites.map((f: { vacancy: unknown }) => f.vacancy));
+        return NextResponse.json(favorites);
     } catch (error: unknown) {
         console.error("Favorites GET error:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });

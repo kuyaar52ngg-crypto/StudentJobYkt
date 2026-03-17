@@ -60,7 +60,7 @@ export default function VacancyCard({
             if (!res.ok) {
                 setIsFavorite(!newStatus); // Rollback
             }
-        } catch (err) {
+        } catch {
             setIsFavorite(!newStatus); // Rollback
         }
     };

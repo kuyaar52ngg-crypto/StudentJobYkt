@@ -21,7 +21,7 @@ export async function PATCH(
         });
 
         return NextResponse.json(company);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Company verification update error:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
     }

@@ -1,0 +1,11 @@
+*.js
+node_modules/
+.next/
+out/
+build/
+*.sql
+*.docx
+*.jpg
+*.png
+lint-results.txt
+output-test.txt

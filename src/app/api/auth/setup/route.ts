@@ -27,11 +27,11 @@ export async function GET() {
       message: 'Admin account provisioned successfully', 
       email: admin.email 
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Setup error:', error);
     return NextResponse.json({ 
       error: 'Failed to setup admin', 
-      details: error.message 
+      details: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }
 }

@@ -31,7 +31,7 @@ export default function LoginPage() {
                 const user = await res.json();
                 await login(user);
             }
-        } catch (err) {
+        } catch {
             setError("Ошибка сервера");
         }
     };

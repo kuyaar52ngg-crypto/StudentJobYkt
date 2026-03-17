@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import SearchBar from "@/components/ui/SearchBar";
 import FilterSidebar from "@/components/ui/FilterSidebar";
 import VacancyCard from "@/components/ui/VacancyCard";
@@ -25,22 +26,28 @@ export default function HomePage() {
   const [filters, setFilters] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (filters.schedule && filters.schedule.length > 0) {
-      params.set("schedule", filters.schedule.join(","));
-    }
-    if (filters.employmentType && filters.employmentType.length > 0) {
-      params.set("employmentType", filters.employmentType.join(","));
-    }
+    const fetchVacancies = async () => {
+      const params = new URLSearchParams();
+      if (filters.schedule && filters.schedule.length > 0) {
+        params.set("schedule", filters.schedule.join(","));
+      }
+      if (filters.employmentType && filters.employmentType.length > 0) {
+        params.set("employmentType", filters.employmentType.join(","));
+      }
 
-    setLoading(true);
-    fetch(`/api/vacancies?${params.toString()}`)
-      .then((r) => r.json())
-      .then((data) => {
+      setLoading(true);
+      try {
+        const r = await fetch(`/api/vacancies?${params.toString()}`);
+        const data = await r.json();
         if (Array.isArray(data)) setVacancies(data.slice(0, 6));
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVacancies();
   }, [filters]);
 
   return (
@@ -57,12 +64,12 @@ export default function HomePage() {
               <p className="text-gray-400 text-sm mb-5">
                 Вакансии, стажировки и практики для студентов без опыта
               </p>
-              <a
+              <Link
                 href="/vacancies"
                 className="inline-block bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors"
               >
                 Смотреть вакансии
-              </a>
+              </Link>
             </div>
             <div className="flex-1 w-full max-w-xl">
               <SearchBar />
@@ -136,12 +143,12 @@ export default function HomePage() {
 
             {/* View more */}
             <div className="text-center mt-8">
-              <a
+              <Link
                 href="/vacancies"
                 className="inline-block border border-[var(--border)] text-sm font-medium px-8 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 Показать все вакансии
-              </a>
+              </Link>
             </div>
           </div>
         </div>

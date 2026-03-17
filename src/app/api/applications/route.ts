@@ -65,13 +65,14 @@ export async function GET(req: NextRequest) {
             const { searchParams } = new URL(req.url);
             const vacancyId = searchParams.get("vacancyId");
             
-            const where: any = {};
+            const where: Record<string, unknown> = {};
             if (vacancyId) {
                 where.vacancyId = vacancyId;
             } else if (user.role === "EMPLOYER") {
                 const company = await prisma.company.findUnique({ where: { userId: user.userId } });
                 if (company) {
-                    where.vacancyId = { in: (await prisma.vacancy.findMany({ where: { companyId: company.id }, select: { id: true } })).map((v: { id: string }) => v.id) };
+                    const companyVacancies = await prisma.vacancy.findMany({ where: { companyId: company.id }, select: { id: true } });
+                    where.vacancyId = { in: companyVacancies.map((v: { id: string }) => v.id) };
                 }
             }
 

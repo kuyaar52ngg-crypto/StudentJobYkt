@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
             orderBy: { createdAt: "desc" }
         });
 
-        return NextResponse.json(favorites.map((f: any) => f.vacancy));
-    } catch (error: any) {
+        return NextResponse.json(favorites.map((f: { vacancy: unknown }) => f.vacancy));
+    } catch (error: unknown) {
         console.error("Favorites GET error:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
     }
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
             });
             return NextResponse.json({ message: "Добавлено в избранное", active: true });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Favorites POST error:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
     }

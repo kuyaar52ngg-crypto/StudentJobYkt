@@ -27,25 +27,31 @@ function VacanciesContent() {
     const [filters, setFilters] = useState<Record<string, string[]>>({});
 
     useEffect(() => {
-        const params = new URLSearchParams();
-        const q = searchParams.get("q");
-        if (q) params.set("q", q);
-        
-        if (filters.schedule && filters.schedule.length > 0) {
-            params.set("schedule", filters.schedule.join(","));
-        }
-        if (filters.employmentType && filters.employmentType.length > 0) {
-            params.set("employmentType", filters.employmentType.join(","));
-        }
+        const fetchVacancies = async () => {
+            const params = new URLSearchParams();
+            const q = searchParams.get("q");
+            if (q) params.set("q", q);
+            
+            if (filters.schedule && filters.schedule.length > 0) {
+                params.set("schedule", filters.schedule.join(","));
+            }
+            if (filters.employmentType && filters.employmentType.length > 0) {
+                params.set("employmentType", filters.employmentType.join(","));
+            }
 
-        setLoading(true);
-        fetch(`/api/vacancies?${params.toString()}`)
-            .then((r) => r.json())
-            .then((data) => {
+            setLoading(true);
+            try {
+                const r = await fetch(`/api/vacancies?${params.toString()}`);
+                const data = await r.json();
                 if (Array.isArray(data)) setVacancies(data);
-            })
-            .catch(console.error)
-            .finally(() => setLoading(false));
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchVacancies();
     }, [searchParams, filters]);
 
     return (

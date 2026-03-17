@@ -27,12 +27,13 @@ export async function GET(req: Request) {
         });
 
         return NextResponse.json(vacancies);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Employer vacancies GET error:", error);
+        const message = error instanceof Error ? error.message : "Ошибка сервера";
         return NextResponse.json({ 
-            error: `Ошибка сервера: ${error.message}`,
-            details: error.message,
-            stack: error.stack
+            error: `Ошибка сервера: ${message}`,
+            details: message,
+            stack: error instanceof Error ? error.stack : undefined
         }, { status: 500 });
     }
 }

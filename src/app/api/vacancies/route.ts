@@ -46,12 +46,13 @@ export async function GET(req: NextRequest) {
         });
 
         return NextResponse.json(vacancies);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Ошибка сервера";
         console.error("Vacancies GET error:", error);
         return NextResponse.json({ 
-            error: `Ошибка сервера: ${error.message}`, 
-            message: error.message, 
-            stack: error.stack 
+            error: `Ошибка сервера: ${message}`, 
+            message: message, 
+            stack: error instanceof Error ? error.stack : undefined 
         }, { status: 500 });
     }
 }
@@ -111,16 +112,14 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json(vacancy, { status: 201 });
-    } catch (error: any) {
-        console.error("Vacancy POST error details:", {
-            message: error.message,
-            stack: error.stack,
-            cause: error.cause
-        });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        const stack = error instanceof Error ? error.stack : undefined;
+        console.error("Vacancy POST error details:", { message, stack });
         return NextResponse.json({ 
-            error: `Ошибка сервера: ${error.message}`, 
-            details: error.message,
-            stack: error.stack
+            error: `Ошибка сервера: ${message}`, 
+            details: message,
+            stack: stack
         }, { status: 500 });
     }
 }

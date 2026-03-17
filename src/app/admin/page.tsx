@@ -55,8 +55,8 @@ export default function AdminDashboardPage() {
                 const data = await res.json();
                 alert(`Ошибка: ${data.error || res.statusText}`);
             }
-        } catch (err: any) {
-            alert(`Ошибка сети: ${err.message}`);
+        } catch (err: unknown) {
+            alert(`Ошибка сети: ${err instanceof Error ? err.message : String(err)}`);
         }
     };
 

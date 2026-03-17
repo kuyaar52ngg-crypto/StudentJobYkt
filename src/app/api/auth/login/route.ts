@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
     const cookie = setTokenCookie(token);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
     
     // Convert Dates to ISO string properly for NextResponse

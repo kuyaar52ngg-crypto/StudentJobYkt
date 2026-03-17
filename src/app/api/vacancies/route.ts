@@ -86,17 +86,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Компания не найдена" }, { status: 404 });
         }
 
+        const salaryMinInt = salaryMin ? parseInt(String(salaryMin)) : null;
+        const salaryMaxInt = salaryMax ? parseInt(String(salaryMax)) : null;
+
         const vacancy = await prisma.vacancy.create({
             data: {
                 title,
                 description,
-                salary,
-                salaryMin: salaryMin ? parseInt(salaryMin) : null,
-                salaryMax: salaryMax ? parseInt(salaryMax) : null,
+                salary: salary || null,
+                salaryMin: (salaryMinInt !== null && !isNaN(salaryMinInt)) ? salaryMinInt : null,
+                salaryMax: (salaryMaxInt !== null && !isNaN(salaryMaxInt)) ? salaryMaxInt : null,
                 schedule,
                 employmentType,
                 location: location || "Якутск",
-                requirements,
+                requirements: requirements || null,
                 companyId: company.id,
                 categoryId: categoryId || null,
                 status: "PENDING", // Wait for moderator approval
@@ -104,8 +107,16 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json(vacancy, { status: 201 });
-    } catch (error) {
-        console.error("Vacancy POST error:", error);
-        return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
+    } catch (error: any) {
+        console.error("Vacancy POST error details:", {
+            message: error.message,
+            stack: error.stack,
+            cause: error.cause
+        });
+        return NextResponse.json({ 
+            error: "Ошибка сервера", 
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 });
     }
 }

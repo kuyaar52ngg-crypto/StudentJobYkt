@@ -4,16 +4,16 @@ import { getUserFromRequest } from "@/lib/jwt-auth";
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id: companyId } = await params;
         const user = getUserFromRequest(req);
         if (!user || user.role !== "ADMIN") {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const { isVerified } = await req.json();
-        const companyId = params.id;
 
         const company = await prisma.company.update({
             where: { id: companyId },

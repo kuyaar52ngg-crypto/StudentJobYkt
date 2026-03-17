@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
         const vacancies = await prisma.vacancy.findMany({
             where: { status: "PENDING" },
             include: {
-                company: { select: { id: true, name: true } },
+                company: { select: { id: true, name: true, isVerified: true } },
             },
             orderBy: { createdAt: "desc" },
         });

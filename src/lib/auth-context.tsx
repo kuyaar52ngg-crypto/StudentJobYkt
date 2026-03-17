@@ -11,6 +11,13 @@ export interface User {
   lastName?: string;
   phone?: string;
   role: string;
+  avatarUrl?: string | null;
+  company?: {
+    id: string;
+    name: string;
+    logo?: string | null;
+    isVerified?: boolean;
+  } | null;
 }
 
 interface AuthContextType {

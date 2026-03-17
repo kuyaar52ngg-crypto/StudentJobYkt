@@ -83,8 +83,22 @@ export default function Header() {
                                         {roleLinks[user.role].label}
                                     </Link>
                                 )}
+                                {/* User Avatar/Logo */}
+                                {user.role === "EMPLOYER" && user.company?.logo ? (
+                                    <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/20 bg-white/10 shrink-0">
+                                        <Image src={user.company.logo} alt="Logo" width={32} height={32} className="w-full h-full object-cover" />
+                                    </div>
+                                ) : user.avatarUrl ? (
+                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-white/10 shrink-0">
+                                        <Image src={user.avatarUrl} alt="Avatar" width={32} height={32} className="w-full h-full object-cover" />
+                                    </div>
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold border border-white/20 shrink-0">
+                                        {(user.name || "U")[0].toUpperCase()}
+                                    </div>
+                                )}
                                 {/* User name */}
-                                <span className="text-xs text-gray-300 hidden sm:inline">
+                                <span className="text-xs text-gray-300 hidden sm:inline truncate max-w-[100px]">
                                     {user.name}
                                 </span>
                                 {/* Sign out */}

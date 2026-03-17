@@ -50,7 +50,7 @@ export default function DashboardPage() {
     // Profile state
     const [profile, setProfile] = useState({
         name: "", phone: "", gender: "", university: "", major: "", skills: "",
-        birthdayDay: "", birthdayMonth: "", birthdayYear: "",
+        birthdayDay: "", birthdayMonth: "", birthdayYear: "", avatarUrl: "",
     });
     const [profileLoading, setProfileLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -81,6 +81,7 @@ export default function DashboardPage() {
                     birthdayDay: bd ? String(bd.getDate()) : "",
                     birthdayMonth: bd ? String(bd.getMonth()) : "",
                     birthdayYear: bd ? String(bd.getFullYear()) : "",
+                    avatarUrl: data.avatarUrl || "",
                 });
             })
             .catch(console.error)
@@ -136,6 +137,7 @@ export default function DashboardPage() {
                     university: profile.university,
                     major: profile.major,
                     skills: profile.skills,
+                    avatarUrl: profile.avatarUrl,
                     birthday,
                 }),
             });
@@ -203,11 +205,25 @@ export default function DashboardPage() {
                     <h2 className="text-xl font-bold mb-6">Личная информация</h2>
 
                     {/* Avatar */}
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center text-white text-xl font-bold">
-                            {initials}
+                    <div className="flex flex-col gap-4 mb-8">
+                        <label className="block text-sm font-medium">Фото профиля</label>
+                        <div className="flex items-center gap-4">
+                            <div className="w-20 h-20 rounded-2xl bg-amber-400 flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-white shadow-md relative">
+                                {profile.avatarUrl ? (
+                                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                ) : initials}
+                            </div>
+                            <div className="flex-1">
+                                <input
+                                    type="text"
+                                    value={profile.avatarUrl}
+                                    onChange={e => setProfile({...profile, avatarUrl: e.target.value})}
+                                    placeholder="Вставьте ссылку на фото"
+                                    className="w-full px-4 py-2 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                />
+                                <p className="text-[10px] text-[var(--muted)] mt-1.5">Вставьте прямую ссылку на изображение (JPG, PNG)</p>
+                            </div>
                         </div>
-                        <span className="text-sm text-[var(--primary)] cursor-pointer hover:underline">Добавить фото</span>
                     </div>
 
                     {profileLoading ? (

@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
         const vacancies = await prisma.vacancy.findMany({
             where,
             include: {
-                company: { select: { id: true, name: true, logo: true } },
+                company: { select: { id: true, name: true, logo: true, isVerified: true } },
                 category: { select: { id: true, name: true } },
                 _count: { select: { applications: true } },
             },

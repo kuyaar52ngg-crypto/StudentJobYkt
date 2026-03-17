@@ -14,7 +14,7 @@ interface PendingVacancy {
     id: string;
     title: string;
     createdAt: string;
-    company: { name: string };
+    company: { id: string; name: string; isVerified: boolean };
 }
 
 export default function AdminDashboardPage() {
@@ -97,24 +97,62 @@ export default function AdminDashboardPage() {
                     {pending.map((v) => (
                         <div
                             key={v.id}
-                            className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                            className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 flex flex-col gap-4"
                         >
-                            <div>
-                                <h3 className="font-semibold text-sm">{v.title}</h3>
-                                <p className="text-xs text-[var(--muted)]">{v.company.name} · {new Date(v.createdAt).toLocaleDateString("ru-RU")}</p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="font-semibold text-sm">{v.title}</h3>
+                                        {v.company.isVerified && (
+                                            <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                Verified
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-[var(--muted)]">{v.company.name} · {new Date(v.createdAt).toLocaleDateString("ru-RU")}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleAction(v.id, "APPROVED")}
+                                        className="bg-green-500 hover:bg-green-600 text-white text-xs font-medium px-4 py-1.5 rounded-lg transition-colors"
+                                    >
+                                        Одобрить
+                                    </button>
+                                    <button
+                                        onClick={() => handleAction(v.id, "REJECTED")}
+                                        className="bg-red-500 hover:bg-red-600 text-white text-xs font-medium px-4 py-1.5 rounded-lg transition-colors"
+                                    >
+                                        Отклонить
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            
+                            {/* Verification Toggle */}
+                            <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                                <span className="text-[11px] text-gray-500 uppercase tracking-widest font-bold">Статус компании</span>
                                 <button
-                                    onClick={() => handleAction(v.id, "APPROVED")}
-                                    className="bg-green-500 hover:bg-green-600 text-white text-xs font-medium px-4 py-1.5 rounded-lg transition-colors"
+                                    onClick={async () => {
+                                        const newStatus = !v.company.isVerified;
+                                        const res = await fetch(`/api/admin/companies/${v.company.id}/verify`, {
+                                            method: "PATCH",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ isVerified: newStatus }),
+                                        });
+                                        if (res.ok) {
+                                            setPending(prev => prev.map(item => 
+                                                item.company.id === v.company.id 
+                                                ? { ...item, company: { ...item.company, isVerified: newStatus } }
+                                                : item
+                                            ));
+                                        }
+                                    }}
+                                    className={`text-[11px] px-3 py-1.5 rounded-lg transition-all font-bold ${
+                                        v.company.isVerified 
+                                        ? "bg-blue-500 text-white shadow-md shadow-blue-200" 
+                                        : "bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600"
+                                    }`}
                                 >
-                                    Одобрить
-                                </button>
-                                <button
-                                    onClick={() => handleAction(v.id, "REJECTED")}
-                                    className="bg-red-500 hover:bg-red-600 text-white text-xs font-medium px-4 py-1.5 rounded-lg transition-colors"
-                                >
-                                    Отклонить
+                                    {v.company.isVerified ? "✓ Верифицирована" : "+ Верифицировать компанию"}
                                 </button>
                             </div>
                         </div>

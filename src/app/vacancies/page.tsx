@@ -13,7 +13,7 @@ interface Vacancy {
     location?: string | null;
     requirements?: string | null;
     createdAt: string;
-    company: { name: string; logo?: string | null };
+    company: { name: string; logo?: string | null; isVerified?: boolean };
 }
 
 const accentColors: Array<"blue" | "pink" | "orange" | "green" | "purple"> = [
@@ -92,6 +92,8 @@ function VacanciesContent() {
                                             id={v.id}
                                             title={v.title}
                                             company={v.company.name}
+                                            companyLogo={v.company.logo}
+                                            isVerified={v.company.isVerified}
                                             salary={v.salary || undefined}
                                             location={v.location || undefined}
                                             date={new Date(v.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}

@@ -58,6 +58,7 @@ model Company {
   industry    String?
   contactInfo String?
   userId      String   @unique
+  isVerified  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

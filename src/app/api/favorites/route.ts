@@ -6,32 +6,26 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
     try {
-        const { searchParams } = new URL(req.url);
-        let userId = searchParams.get("userId");
-        
-        if (!userId) {
-            const user = getUserFromRequest(req);
-            if (user) userId = user.userId;
-        }
-
-        if (!userId) {
-            return NextResponse.json({ error: "userId is required" }, { status: 400 });
+        const user = getUserFromRequest(req);
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const favorites = await prisma.favorite.findMany({
-            where: { userId },
+            where: { userId: user.userId },
             include: {
                 vacancy: {
                     include: {
-                        company: { select: { id: true, name: true, logo: true } },
-                    },
-                },
+                        company: { select: { id: true, name: true, logo: true, isVerified: true } },
+                        category: { select: { id: true, name: true } },
+                    }
+                }
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: "desc" }
         });
 
-        return NextResponse.json(favorites);
-    } catch (error) {
+        return NextResponse.json(favorites.map((f: any) => f.vacancy));
+    } catch (error: any) {
         console.error("Favorites GET error:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
     }
@@ -39,68 +33,44 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-        let { userId, vacancyId } = body;
-
-        if (!userId) {
-            const user = getUserFromRequest(req);
-            if (user) userId = user.userId;
+        const user = getUserFromRequest(req);
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        if (!userId || !vacancyId) {
-            return NextResponse.json(
-                { error: "userId and vacancyId are required" },
-                { status: 400 }
-            );
+        const { vacancyId } = await req.json();
+        if (!vacancyId) {
+            return NextResponse.json({ error: "vacancyId is required" }, { status: 400 });
         }
 
+        // Check if already exists
         const existing = await prisma.favorite.findUnique({
-            where: { userId_vacancyId: { userId, vacancyId } },
+            where: {
+                userId_vacancyId: {
+                    userId: user.userId,
+                    vacancyId
+                }
+            }
         });
 
         if (existing) {
-            return NextResponse.json(
-                { error: "Уже в избранном" },
-                { status: 409 }
-            );
+            // Remove
+            await prisma.favorite.delete({
+                where: { id: existing.id }
+            });
+            return NextResponse.json({ message: "Удалено из избранного", active: false });
+        } else {
+            // Add
+            await prisma.favorite.create({
+                data: {
+                    userId: user.userId,
+                    vacancyId
+                }
+            });
+            return NextResponse.json({ message: "Добавлено в избранное", active: true });
         }
-
-        const favorite = await prisma.favorite.create({
-            data: { userId, vacancyId },
-        });
-
-        return NextResponse.json(favorite, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Favorites POST error:", error);
-        return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
-    }
-}
-
-export async function DELETE(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
-        let userId = searchParams.get("userId");
-        const vacancyId = searchParams.get("vacancyId");
-
-        if (!userId) {
-            const user = getUserFromRequest(req);
-            if (user) userId = user.userId;
-        }
-
-        if (!userId || !vacancyId) {
-            return NextResponse.json(
-                { error: "userId and vacancyId are required" },
-                { status: 400 }
-            );
-        }
-
-        await prisma.favorite.delete({
-            where: { userId_vacancyId: { userId, vacancyId } },
-        });
-
-        return NextResponse.json({ message: "Удалено из избранного" });
-    } catch (error) {
-        console.error("Favorites DELETE error:", error);
         return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
     }
 }

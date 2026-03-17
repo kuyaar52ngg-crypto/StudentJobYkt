@@ -41,7 +41,7 @@ export default function EmployerDashboardPage() {
 
     // Company profile
     const [companyProfile, setCompanyProfile] = useState({
-        name: "", description: "", industry: "", contactInfo: "", phone: "",
+        name: "", description: "", industry: "", contactInfo: "", phone: "", logo: "",
     });
     const [profileLoading, setProfileLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -68,6 +68,7 @@ export default function EmployerDashboardPage() {
                     industry: data.company?.industry || "",
                     contactInfo: data.company?.contactInfo || "",
                     phone: data.phone || "",
+                    logo: data.company?.logo || "",
                 });
             })
             .catch(console.error)
@@ -115,6 +116,7 @@ export default function EmployerDashboardPage() {
                         description: companyProfile.description,
                         industry: companyProfile.industry,
                         contactInfo: companyProfile.contactInfo,
+                        logo: companyProfile.logo,
                     },
                 }),
             });
@@ -194,6 +196,28 @@ export default function EmployerDashboardPage() {
             {activeTab === "profile" && (
                 <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6 sm:p-8 animate-fade-in-up">
                     <h2 className="text-xl font-bold mb-6">Данные компании</h2>
+
+                    {/* Logo */}
+                    <div className="flex flex-col gap-4 mb-8">
+                        <label className="block text-sm font-medium">Логотип компании</label>
+                        <div className="flex items-center gap-4">
+                            <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 text-2xl font-bold overflow-hidden border border-[var(--border)] shadow-sm relative">
+                                {companyProfile.logo ? (
+                                    <img src={companyProfile.logo} alt="Logo" className="w-full h-full object-cover" />
+                                ) : "🏢"}
+                            </div>
+                            <div className="flex-1">
+                                <input
+                                    type="text"
+                                    value={companyProfile.logo}
+                                    onChange={e => setCompanyProfile({...companyProfile, logo: e.target.value})}
+                                    placeholder="Вставьте ссылку на логотип"
+                                    className="w-full px-4 py-2 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                />
+                                <p className="text-[10px] text-[var(--muted)] mt-1.5">Вставьте прямую ссылку на изображение логотипа</p>
+                            </div>
+                        </div>
+                    </div>
 
                     {profileLoading ? (
                         <div className="space-y-4">

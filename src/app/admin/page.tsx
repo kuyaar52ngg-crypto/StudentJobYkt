@@ -34,19 +34,31 @@ export default function AdminDashboardPage() {
         }).finally(() => setPendingLoading(false));
     }, []);
 
+    if (status === "loading") return <div className="p-8">Загрузка...</div>;
+    
+    if (status === "unauthenticated" || !user) {
+        return <div className="p-8 text-red-500">Пожалуйста, авторизуйтесь как администратор</div>;
+    }
+
+    if (user.role !== "ADMIN") return <div className="p-8 text-red-500">Доступ запрещен. Ваша роль: {user.role}</div>;
+
     const handleAction = async (id: string, actionStatus: "APPROVED" | "REJECTED") => {
-        const res = await fetch(`/api/vacancies/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: actionStatus }),
-        });
-        if (res.ok) {
-            setPending(prev => prev.filter(v => v.id !== id));
+        try {
+            const res = await fetch(`/api/vacancies/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: actionStatus }),
+            });
+            if (res.ok) {
+                setPending(prev => prev.filter(v => v.id !== id));
+            } else {
+                const data = await res.json();
+                alert(`Ошибка: ${data.error || res.statusText}`);
+            }
+        } catch (err: any) {
+            alert(`Ошибка сети: ${err.message}`);
         }
     };
-
-    if (status === "loading") return <div className="p-8">Загрузка...</div>;
-    if (user && user.role !== "ADMIN") return <div className="p-8 text-red-500">Доступ запрещен</div>;
 
     const statCards = [
         { label: "Пользователей", value: stats.users, icon: "👥", color: "bg-[var(--accent-blue)]" },

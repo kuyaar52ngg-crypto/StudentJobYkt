@@ -26,19 +26,24 @@ export function verifyToken(token: string): TokenPayload | null {
 export function getUserFromRequest(req: NextRequest | Request): TokenPayload | null {
   let token: string | undefined;
 
-  // NextRequest provides access to cookies directly
+  // 1. Try NextRequest cookies
   if (req instanceof NextRequest) {
     token = req.cookies.get('token')?.value;
-  } else {
-    // Standard Request fallback
+  } 
+  
+  // 2. Try manual cookie parsing from headers (fallback or standard Request)
+  if (!token) {
     const cookieHeader = req.headers.get('cookie');
     if (cookieHeader) {
-      const cookies = Object.fromEntries(cookieHeader.split('; ').map(c => c.split('=')));
-      token = cookies['token'];
+      // More robust parsing: handle whitespace and multiple cookies correctly
+      const tokenMatch = cookieHeader.match(/(^|;)\s*token\s*=\s*([^;]+)/);
+      if (tokenMatch) {
+        token = tokenMatch[2].trim();
+      }
     }
   }
 
-  // Fallback to Authorization header
+  // 3. Last fallback: Authorization header
   if (!token) {
     const authHeader = req.headers.get('authorization');
     if (authHeader?.startsWith('Bearer ')) {

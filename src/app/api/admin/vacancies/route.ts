@@ -10,10 +10,15 @@ export async function GET(req: NextRequest) {
         if (!user || user.role !== "ADMIN") {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        const { searchParams } = new URL(req.url);
+        const all = searchParams.get("all") === "true";
+
         const vacancies = await prisma.vacancy.findMany({
-            where: { status: "PENDING" },
+            where: all ? {} : { status: "PENDING" },
             include: {
-                company: { select: { id: true, name: true, isVerified: true } },
+                company: { select: { id: true, name: true, logo: true, isVerified: true } },
+                category: { select: { id: true, name: true } },
             },
             orderBy: { createdAt: "desc" },
         });

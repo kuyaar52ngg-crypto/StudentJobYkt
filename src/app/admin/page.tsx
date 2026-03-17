@@ -129,6 +129,21 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Вы уверены, что хотите удалить эту вакансию? Это действие необратимо.")) return;
+        try {
+            const res = await fetch(`/api/vacancies/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                setAllVacancies(prev => prev.filter(v => v.id !== id));
+                alert("Вакансия удалена");
+            } else {
+                alert("Ошибка при удалении");
+            }
+        } catch {
+            alert("Ошибка сети");
+        }
+    };
+
     const statCards = [
         { label: "Пользователей", value: stats.users, icon: "👥", color: "bg-[var(--accent-blue)]" },
         { label: "Вакансий", value: stats.vacancies, icon: "💼", color: "bg-[var(--accent-green)]" },
@@ -289,12 +304,21 @@ export default function AdminDashboardPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => handleEditClick(v)}
-                                                    className="text-[var(--primary)] hover:underline font-medium"
-                                                >
-                                                    Редактировать
-                                                </button>
+                                                <div className="flex items-center justify-end gap-3">
+                                                    <button
+                                                        onClick={() => handleEditClick(v)}
+                                                        className="text-[var(--primary)] hover:underline font-medium"
+                                                    >
+                                                        Редактировать
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(v.id)}
+                                                        className="text-red-500 hover:text-red-700 transition-colors"
+                                                        title="Удалить вакансию"
+                                                    >
+                                                        Удалить
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

@@ -3,6 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { CheckCircle } from "lucide-react";
 
 type Tab = "profile" | "vacancies" | "applications";
 
@@ -41,7 +42,7 @@ export default function EmployerDashboardPage() {
 
     // Company profile
     const [companyProfile, setCompanyProfile] = useState({
-        name: "", description: "", industry: "", contactInfo: "", phone: "", logo: "",
+        name: "", description: "", industry: "", contactInfo: "", phone: "", logo: "", isVerified: false,
     });
     const [profileLoading, setProfileLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -69,6 +70,7 @@ export default function EmployerDashboardPage() {
                     contactInfo: data.company?.contactInfo || "",
                     phone: data.phone || "",
                     logo: data.company?.logo || "",
+                    isVerified: data.company?.isVerified || false,
                 });
             })
             .catch(console.error)
@@ -200,21 +202,45 @@ export default function EmployerDashboardPage() {
                     {/* Logo */}
                     <div className="flex flex-col gap-4 mb-8">
                         <label className="block text-sm font-medium">Логотип компании</label>
-                        <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 text-2xl font-bold overflow-hidden border border-[var(--border)] shadow-sm relative">
-                                {companyProfile.logo ? (
-                                    <img src={companyProfile.logo} alt="Logo" className="w-full h-full object-cover" />
-                                ) : "🏢"}
+                        <div className="flex items-center gap-6">
+                            <div className="relative group">
+                                <div className="w-24 h-24 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 text-3xl font-bold overflow-hidden border-2 border-[var(--border)] shadow-lg transition-transform group-hover:scale-[1.02]">
+                                    {companyProfile.logo ? (
+                                        <img src={companyProfile.logo} alt="Logo" className="w-full h-full object-cover" />
+                                    ) : "🏢"}
+                                </div>
+                                <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                                    Изменить
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChangeCapture={(e) => {
+                                            const file = (e.currentTarget as HTMLInputElement).files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setCompanyProfile({ ...companyProfile, logo: reader.result as string });
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                </label>
                             </div>
                             <div className="flex-1">
-                                <input
-                                    type="text"
-                                    value={companyProfile.logo}
-                                    onChange={e => setCompanyProfile({...companyProfile, logo: e.target.value})}
-                                    placeholder="Вставьте ссылку на логотип"
-                                    className="w-full px-4 py-2 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
-                                />
-                                <p className="text-[10px] text-[var(--muted)] mt-1.5">Вставьте прямую ссылку на изображение логотипа</p>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-sm font-medium text-[var(--foreground)]">Загрузите логотип</p>
+                                    {companyProfile.isVerified && (
+                                        <div className="group relative">
+                                            <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500/10" />
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                                Официальный аккаунт
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-[11px] text-[var(--muted)] max-w-[200px]">Нажмите на квадрат, чтобы загрузить логотип вашей компании с устройства</p>
                             </div>
                         </div>
                     </div>
@@ -400,7 +426,7 @@ export default function EmployerDashboardPage() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {applications.map(app => (
+                            {applications.filter(a => a.vacancy).map(app => (
                                 <div
                                     key={app.id}
                                     className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5"

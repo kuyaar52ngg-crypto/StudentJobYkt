@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Badge from "@/components/ui/Badge";
 import Link from "next/link";
+import { CheckCircle } from "lucide-react";
 
 interface VacancyDetail {
     id: string;
@@ -16,7 +17,7 @@ interface VacancyDetail {
     location?: string | null;
     requirements?: string | null;
     createdAt: string;
-    company: { name: string; logo?: string | null; industry?: string | null; contactInfo?: string | null };
+    company: { id: string; name: string; logo?: string | null; industry?: string | null; contactInfo?: string | null; isVerified?: boolean };
 }
 
 export default function VacancyDetailPage() {
@@ -117,9 +118,26 @@ export default function VacancyDetailPage() {
                 <div className="flex-1">
                     <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6 sm:p-8">
                         {/* Header */}
-                        <div className="flex items-start justify-between mb-6">
+                        <div className="flex items-start gap-5 mb-6">
+                            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 text-xl font-bold overflow-hidden shrink-0 border border-[var(--border)]">
+                                {vacancy.company.logo ? (
+                                    <img src={vacancy.company.logo} alt={vacancy.company.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    vacancy.company.name.charAt(0).toUpperCase()
+                                )}
+                            </div>
                             <div>
-                                <p className="text-sm text-[var(--muted)] mb-1">{vacancy.company.name}</p>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <p className="text-sm text-[var(--muted)]">{vacancy.company.name}</p>
+                                    {vacancy.company.isVerified && (
+                                        <div className="group relative">
+                                            <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500/10" />
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                                Официальный аккаунт
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 <h1 className="text-2xl font-bold">{vacancy.title}</h1>
                             </div>
                         </div>

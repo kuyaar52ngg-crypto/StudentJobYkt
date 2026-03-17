@@ -207,21 +207,35 @@ export default function DashboardPage() {
                     {/* Avatar */}
                     <div className="flex flex-col gap-4 mb-8">
                         <label className="block text-sm font-medium">Фото профиля</label>
-                        <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 rounded-2xl bg-amber-400 flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-white shadow-md relative">
-                                {profile.avatarUrl ? (
-                                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                                ) : initials}
+                        <div className="flex items-center gap-6">
+                            <div className="relative group">
+                                <div className="w-24 h-24 rounded-2xl bg-amber-400 flex items-center justify-center text-white text-3xl font-bold overflow-hidden border-2 border-white shadow-lg transition-transform group-hover:scale-[1.02]">
+                                    {profile.avatarUrl ? (
+                                        <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : initials}
+                                </div>
+                                <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                                    Изменить
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChangeCapture={(e) => {
+                                            const file = (e.currentTarget as HTMLInputElement).files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setProfile({ ...profile, avatarUrl: reader.result as string });
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                </label>
                             </div>
                             <div className="flex-1">
-                                <input
-                                    type="text"
-                                    value={profile.avatarUrl}
-                                    onChange={e => setProfile({...profile, avatarUrl: e.target.value})}
-                                    placeholder="Вставьте ссылку на фото"
-                                    className="w-full px-4 py-2 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
-                                />
-                                <p className="text-[10px] text-[var(--muted)] mt-1.5">Вставьте прямую ссылку на изображение (JPG, PNG)</p>
+                                <p className="text-sm font-medium text-[var(--foreground)]">Выберите фото</p>
+                                <p className="text-[11px] text-[var(--muted)] mt-1 max-w-[200px]">Нажмите на квадрат, чтобы загрузить изображение с вашего устройства</p>
                             </div>
                         </div>
                     </div>
@@ -388,7 +402,7 @@ export default function DashboardPage() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {favorites.map(fav => (
+                            {favorites.filter(f => f.vacancy).map(fav => (
                                 <div
                                     key={fav.id}
                                     className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"

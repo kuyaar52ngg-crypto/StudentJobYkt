@@ -112,6 +112,7 @@ export default function EmployerDashboardPage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    name: companyProfile.name,
                     phone: companyProfile.phone,
                     company: {
                         name: companyProfile.name,

@@ -102,7 +102,7 @@ export default function Header() {
                                     )}
                                     
                                     <span className="text-xs text-gray-300 group-hover:text-white transition-colors hidden sm:inline max-w-[100px] truncate">
-                                        {user.name}
+                                        {user.role === 'EMPLOYER' && user.company?.name ? user.company.name : user.name}
                                     </span>
                                     
                                     <svg 
@@ -125,7 +125,9 @@ export default function Header() {
                                         <div className="absolute right-0 mt-2 w-52 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl z-20 overflow-hidden animate-scale-in">
                                             <div className="p-4 border-b border-white/5">
                                                 <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Пользователь</p>
-                                                <p className="text-sm font-semibold truncate text-white">{user.name}</p>
+                                                <p className="text-sm font-semibold truncate text-white">
+                                                    {user.role === 'EMPLOYER' && user.company?.name ? user.company.name : user.name}
+                                                </p>
                                                 <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
                                             </div>
                                             

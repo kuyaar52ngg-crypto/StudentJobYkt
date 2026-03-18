@@ -55,6 +55,11 @@ export default function HomePage() {
     fetchVacancies();
   }, [filters, sort]);
 
+  const handleReset = () => {
+    setSort("newest");
+    router.push("/");
+  };
+
   return (
     <>
       {/* Hero section — dark background */}

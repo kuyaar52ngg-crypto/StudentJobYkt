@@ -13,6 +13,7 @@ interface Vacancy {
   location?: string | null;
   requirements?: string | null;
   createdAt: string;
+  isApplied?: boolean;
   company: { name: string; logo?: string | null; isVerified?: boolean };
 }
 
@@ -24,10 +25,12 @@ export default function HomePage() {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<Record<string, string[]>>({});
+  const [sort, setSort] = useState("newest");
 
   useEffect(() => {
     const fetchVacancies = async () => {
       const params = new URLSearchParams();
+      if (sort) params.set("sort", sort);
       if (filters.schedule && filters.schedule.length > 0) {
         params.set("schedule", filters.schedule.join(","));
       }
@@ -48,7 +51,7 @@ export default function HomePage() {
     };
 
     fetchVacancies();
-  }, [filters]);
+  }, [filters, sort]);
 
   return (
     <>
@@ -98,9 +101,15 @@ export default function HomePage() {
               <h2 className="text-xl font-bold">Популярные вакансии</h2>
               <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
                 <span>Сортировка:</span>
-                <button className="font-semibold text-foreground hover:text-[var(--primary)] transition-colors">
-                  По дате
-                </button>
+                <select 
+                  className="bg-transparent font-semibold text-foreground focus:outline-none cursor-pointer"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                >
+                  <option value="newest">По дате (новые)</option>
+                  <option value="oldest">По дате (старые)</option>
+                  <option value="salary_desc">По зарплате</option>
+                </select>
               </div>
             </div>
 
@@ -132,6 +141,7 @@ export default function HomePage() {
                       isVerified={v.company.isVerified}
                       salary={v.salary || undefined}
                       location={v.location || undefined}
+                      isApplied={v.isApplied}
                       date={new Date(v.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
                       tags={v.requirements?.split(",").map((t) => t.trim()).filter(Boolean) || []}
                       accentColor={accentColors[i % accentColors.length]}

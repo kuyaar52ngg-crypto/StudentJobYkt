@@ -17,6 +17,7 @@ interface VacancyCardProps {
     location?: string;
     date: string;
     isFavoriteInitial?: boolean;
+    isApplied?: boolean;
     tags?: string[];
     accentColor?: "blue" | "pink" | "orange" | "green" | "purple";
 }
@@ -31,6 +32,7 @@ export default function VacancyCard({
     location,
     date,
     isFavoriteInitial = false,
+    isApplied = false,
     tags = [],
     accentColor = "blue",
 }: VacancyCardProps) {
@@ -121,13 +123,19 @@ export default function VacancyCard({
 
                 {/* Bottom: salary + location + details */}
                 <div className="mt-auto pt-4 border-t border-[var(--border)] flex items-center justify-between">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1 mr-2">
                         {salary && <p className="text-sm font-bold text-gray-900 truncate">{salary}</p>}
                         {location && <p className="text-[11px] text-[var(--muted)] truncate">{location}</p>}
                     </div>
-                    <button className="bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-transform active:scale-95 shadow-sm">
-                        Откликнуться
-                    </button>
+                    {isApplied ? (
+                        <div className="text-green-600 bg-green-50 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-green-100 shrink-0">
+                            Вы уже откликнулись
+                        </div>
+                    ) : (
+                        <button className="bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-transform active:scale-95 shadow-sm shrink-0">
+                            Откликнуться
+                        </button>
+                    )}
                 </div>
             </div>
         </Link>

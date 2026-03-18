@@ -11,15 +11,18 @@ export async function GET(req: NextRequest) {
         const schedule = searchParams.get("schedule") || "";
         const employmentType = searchParams.get("employmentType") || "";
         const categoryId = searchParams.get("categoryId") || "";
+        const sort = searchParams.get("sort") || "newest";
 
-        const where: Record<string, unknown> = {
+        const user = getUserFromRequest(req);
+
+        const where: Record<string, any> = {
             status: "APPROVED",
         };
 
         if (q) {
             where.OR = [
-                { title: { contains: q } },
-                { description: { contains: q } },
+                { title: { contains: q, mode: 'insensitive' } },
+                { description: { contains: q, mode: 'insensitive' } },
             ];
         }
 
@@ -41,24 +44,38 @@ export async function GET(req: NextRequest) {
             where.categoryId = categoryId;
         }
 
+        let orderBy: any = { createdAt: "desc" };
+        if (sort === "oldest") {
+            orderBy = { createdAt: "asc" };
+        } else if (sort === "salary_desc") {
+            orderBy = { salaryMax: "desc" };
+        }
+
         const vacancies = await prisma.vacancy.findMany({
             where,
             include: {
                 company: { select: { id: true, name: true, logo: true, isVerified: true } },
                 category: { select: { id: true, name: true } },
                 _count: { select: { applications: true } },
+                applications: user ? { where: { userId: user.userId }, select: { id: true } } : false,
             },
-            orderBy: { createdAt: "desc" },
+            orderBy,
         });
 
-        return NextResponse.json(vacancies);
+        // Map to include isApplied field
+        const formattedVacancies = vacancies.map((v: any) => ({
+            ...v,
+            isApplied: v.applications && v.applications.length > 0,
+            applications: undefined, // Remove the raw applications data
+        }));
+
+        return NextResponse.json(formattedVacancies);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Ошибка сервера";
         console.error("Vacancies GET error:", error);
         return NextResponse.json({ 
             error: `Ошибка сервера: ${message}`, 
             message: message, 
-            stack: error instanceof Error ? error.stack : undefined 
         }, { status: 500 });
     }
 }

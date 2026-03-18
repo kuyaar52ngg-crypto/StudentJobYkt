@@ -150,6 +150,7 @@ export async function PUT(req: NextRequest) {
             description: true,
             industry: true,
             contactInfo: true,
+            isVerified: true,
           },
         },
       },

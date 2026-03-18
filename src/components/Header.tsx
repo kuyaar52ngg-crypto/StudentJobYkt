@@ -87,7 +87,7 @@ export default function Header() {
                                     className="flex items-center gap-2 p-1 rounded-xl hover:bg-white/5 transition-all group"
                                 >
                                     {/* Avatar */}
-                                    {user.role === "EMPLOYER" && user.company?.logo ? (
+                                    {user.company?.logo ? (
                                         <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/20 bg-white/10 shrink-0">
                                             <img src={user.company.logo} alt="Logo" className="w-full h-full object-cover" />
                                         </div>
@@ -215,3 +215,4 @@ export default function Header() {
         </header>
     );
 }
+```

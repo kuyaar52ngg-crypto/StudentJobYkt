@@ -48,7 +48,6 @@ export default function Header() {
                             StudentJobYkt
                         </span>
                     </Link>
-2026-03-19T01:49:10+09:00
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-6">
                         {navLinks.map((link) => (

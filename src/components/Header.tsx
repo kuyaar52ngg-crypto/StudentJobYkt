@@ -209,15 +209,6 @@ export default function Header() {
                                 {link.label}
                             </Link>
                         ))}
-                        {user && user?.role && roleLinks[user.role] && (
-                            <Link
-                                href={roleLinks[user.role].href}
-                                onClick={() => setMobileOpen(false)}
-                                className="text-sm px-2 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5"
-                            >
-                                {roleLinks[user.role].label}
-                            </Link>
-                        )}
                     </nav>
                 )}
             </div>

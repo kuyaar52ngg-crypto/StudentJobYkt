@@ -125,7 +125,7 @@ export default function EmployerDashboardPage() {
             });
             if (res.ok) {
                 setSaveMsg("Данные сохранены!");
-                refresh();
+                await refresh();
             } else {
                 setSaveMsg("Ошибка сохранения");
             }

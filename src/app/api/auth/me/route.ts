@@ -125,7 +125,37 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(user, { status: 200 });
+    // Fetch the updated user with company data
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: userData.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        phone: true,
+        gender: true,
+        birthday: true,
+        university: true,
+        major: true,
+        yearOfStudy: true,
+        skills: true,
+        interests: true,
+        avatarUrl: true,
+        company: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+            description: true,
+            industry: true,
+            contactInfo: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(updatedUser, { status: 200 });
   } catch (error) {
     console.error('Me PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

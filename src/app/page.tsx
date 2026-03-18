@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import SearchBar from "@/components/ui/SearchBar";
 import FilterSidebar from "@/components/ui/FilterSidebar";
 import VacancyCard from "@/components/ui/VacancyCard";
@@ -22,6 +23,7 @@ const accentColors: Array<"blue" | "pink" | "orange" | "green" | "purple"> = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<Record<string, string[]>>({});
@@ -92,7 +94,7 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <FilterSidebar onFilterChange={setFilters} />
+          <FilterSidebar onFilterChange={setFilters} onReset={handleReset} />
 
           {/* Vacancies */}
           <div className="flex-1 min-w-0">

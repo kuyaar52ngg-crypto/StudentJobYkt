@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import FilterSidebar from "@/components/ui/FilterSidebar";
 import VacancyCard from "@/components/ui/VacancyCard";
 import SearchBar from "@/components/ui/SearchBar";
@@ -23,6 +23,7 @@ const accentColors: Array<"blue" | "pink" | "orange" | "green" | "purple"> = [
 
 function VacanciesContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [vacancies, setVacancies] = useState<Vacancy[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -64,6 +65,11 @@ function VacanciesContent() {
         fetchVacancies();
     }, [searchParams, filters, sort]);
 
+    const handleReset = () => {
+        setSort("newest");
+        router.push("/vacancies");
+    };
+
     return (
         <>
             {/* Search header */}
@@ -77,7 +83,7 @@ function VacanciesContent() {
             {/* Content */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
-                    <FilterSidebar onFilterChange={setFilters} />
+                    <FilterSidebar onFilterChange={setFilters} onReset={handleReset} />
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-6">
                             <p className="text-sm text-[var(--muted)]">

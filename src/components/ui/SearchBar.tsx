@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function SearchBar() {
+function SearchBarContent() {
     const [query, setQuery] = useState("");
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Sync query state with URL q parameter
+    useEffect(() => {
+        const q = searchParams.get("q");
+        setQuery(q || "");
+    }, [searchParams]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        if (query.trim()) {
-            router.push(`/vacancies?q=${encodeURIComponent(query.trim())}`);
+        const trimmed = query.trim();
+        if (trimmed) {
+            router.push(`/vacancies?q=${encodeURIComponent(trimmed)}`);
+        } else {
+            router.push(`/vacancies`);
         }
     };
 
@@ -47,5 +57,13 @@ export default function SearchBar() {
                 </button>
             </div>
         </form>
+    );
+}
+
+export default function SearchBar() {
+    return (
+        <Suspense fallback={<div className="h-12 bg-white/5 rounded-2xl animate-pulse" />}>
+            <SearchBarContent />
+        </Suspense>
     );
 }

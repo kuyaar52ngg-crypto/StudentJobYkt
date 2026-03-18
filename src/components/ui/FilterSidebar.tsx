@@ -4,6 +4,7 @@ import { useState } from "react";
 
 interface FilterSidebarProps {
     onFilterChange?: (filters: Record<string, string[]>) => void;
+    onReset?: () => void;
 }
 
 const scheduleOptions = [
@@ -20,7 +21,7 @@ const employmentOptions = [
     { value: "Практика", label: "Практика" },
 ];
 
-export default function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
+export default function FilterSidebar({ onFilterChange, onReset }: FilterSidebarProps) {
     const [selectedSchedule, setSelectedSchedule] = useState<string[]>([]);
     const [selectedEmployment, setSelectedEmployment] = useState<string[]>([]);
 
@@ -52,6 +53,7 @@ export default function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
                                 setSelectedSchedule([]);
                                 setSelectedEmployment([]);
                                 onFilterChange?.({ schedule: [], employmentType: [] });
+                                onReset?.();
                             }}
                         >
                             Сбросить

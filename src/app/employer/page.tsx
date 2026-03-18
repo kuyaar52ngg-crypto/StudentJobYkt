@@ -60,7 +60,7 @@ export default function EmployerDashboardPage() {
     // Load profile
     useEffect(() => {
         if (!user?.id) return;
-        fetch("/api/auth/me")
+        fetch(`/api/auth/me?t=${Date.now()}`)
             .then(r => r.json())
             .then(data => {
                 setCompanyProfile({

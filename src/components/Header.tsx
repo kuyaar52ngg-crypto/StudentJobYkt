@@ -89,7 +89,7 @@ export default function Header() {
                                     {/* Avatar */}
                                     {user.role === "EMPLOYER" && user.company?.logo ? (
                                         <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/20 bg-white/10 shrink-0">
-                                            <Image src={user.company.logo} alt="Logo" width={32} height={32} className="w-full h-full object-cover" />
+                                            <img src={user.company.logo} alt="Logo" className="w-full h-full object-cover" />
                                         </div>
                                     ) : user.avatarUrl ? (
                                         <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-white/10 shrink-0">

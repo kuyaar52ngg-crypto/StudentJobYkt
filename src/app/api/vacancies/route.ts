@@ -11,6 +11,8 @@ export async function GET(req: NextRequest) {
         const schedule = searchParams.get("schedule") || "";
         const employmentType = searchParams.get("employmentType") || "";
         const categoryId = searchParams.get("categoryId") || "";
+        const salaryMinStr = searchParams.get("salaryMin") || "";
+        const salaryMaxStr = searchParams.get("salaryMax") || "";
         const sort = searchParams.get("sort") || "newest";
 
         const user = getUserFromRequest(req);
@@ -42,6 +44,41 @@ export async function GET(req: NextRequest) {
 
         if (categoryId && categoryId !== "all") {
             where.categoryId = categoryId;
+        }
+
+        const salaryRules = [];
+
+        if (salaryMinStr) {
+            const min = parseInt(salaryMinStr, 10);
+            if (!isNaN(min)) {
+                // To display vacancies where the maximum salary is >= user minimum,
+                // OR if maximum is not specified, minimum is >= user minimum.
+                salaryRules.push({
+                    OR: [
+                        { salaryMax: { gte: min } },
+                        { salaryMax: null, salaryMin: { gte: min } },
+                        { isNegotiable: true } // Usually include negotiable salaries in ranges
+                    ]
+                });
+            }
+        }
+
+        if (salaryMaxStr) {
+            const max = parseInt(salaryMaxStr, 10);
+            if (!isNaN(max)) {
+                // To display vacancies where the minimum salary is <= user maximum,
+                // OR if minimum is not specified, maximum is <= user maximum.
+                salaryRules.push({
+                    OR: [
+                        { salaryMin: { lte: max } },
+                        { salaryMin: null, salaryMax: { lte: max } },
+                    ]
+                });
+            }
+        }
+
+        if (salaryRules.length > 0) {
+            where.AND = salaryRules;
         }
 
         let orderBy: any = { createdAt: "desc" };

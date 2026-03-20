@@ -32,7 +32,7 @@ function VacanciesContent() {
     const [vacancies, setVacancies] = useState<Vacancy[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [filters, setFilters] = useState<Record<string, string[]>>({});
+    const [filters, setFilters] = useState<Record<string, any>>({});
     const [sort, setSort] = useState("newest");
 
     useEffect(() => {
@@ -47,6 +47,13 @@ function VacanciesContent() {
             }
             if (filters.employmentType && filters.employmentType.length > 0) {
                 params.set("employmentType", filters.employmentType.join(","));
+            }
+            if (filters.salaryMin) {
+                params.set("salaryMin", filters.salaryMin.toString());
+            }
+            if (filters.salaryMax && filters.salaryMax < 300000) {
+                // Only pass max if it's less than the absolute max, otherwise it's unbounded
+                params.set("salaryMax", filters.salaryMax.toString());
             }
 
             setLoading(true);

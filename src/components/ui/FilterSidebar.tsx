@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import SalarySlider from "./SalarySlider";
+
 interface FilterSidebarProps {
-    onFilterChange?: (filters: Record<string, string[]>) => void;
+    onFilterChange?: (filters: Record<string, any>) => void;
     onReset?: () => void;
 }
 
@@ -24,6 +26,7 @@ const employmentOptions = [
 export default function FilterSidebar({ onFilterChange, onReset }: FilterSidebarProps) {
     const [selectedSchedule, setSelectedSchedule] = useState<string[]>([]);
     const [selectedEmployment, setSelectedEmployment] = useState<string[]>([]);
+    const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 300000]);
 
     const toggleFilter = (
         value: string,
@@ -35,9 +38,29 @@ export default function FilterSidebar({ onFilterChange, onReset }: FilterSidebar
             ? current.filter((v) => v !== value)
             : [...current, value];
         setter(next);
-        onFilterChange?.({
+        const nextObj = {
             schedule: key === "schedule" ? next : selectedSchedule,
             employmentType: key === "employmentType" ? next : selectedEmployment,
+            salaryMin: salaryRange[0] > 0 ? salaryRange[0] : undefined,
+            salaryMax: salaryRange[1] < 300000 ? salaryRange[1] : undefined,
+        };
+        onFilterChange?.(nextObj);
+    };
+
+    const handleSalaryChange = (newRange: [number, number]) => {
+        setSalaryRange(newRange);
+        // Do not call onFilterChange immediately on every pixel move to avoid lag,
+        // Wait, since we don't have a debounce right now, let's just update. 
+        // We'll update state, but maybe send to parent only on mouseup if it was a heavy operation, 
+        // but here it's fine. Next.js fetch is in useEffect. We'll rely on React state batching.
+    };
+
+    const applySalaryFilter = () => {
+        onFilterChange?.({
+            schedule: selectedSchedule,
+            employmentType: selectedEmployment,
+            salaryMin: salaryRange[0] > 0 ? salaryRange[0] : undefined,
+            salaryMax: salaryRange[1] < 300000 ? salaryRange[1] : undefined,
         });
     };
 
@@ -52,6 +75,7 @@ export default function FilterSidebar({ onFilterChange, onReset }: FilterSidebar
                             onClick={() => {
                                 setSelectedSchedule([]);
                                 setSelectedEmployment([]);
+                                setSalaryRange([0, 300000]);
                                 onFilterChange?.({ schedule: [], employmentType: [] });
                                 onReset?.();
                             }}
@@ -59,6 +83,51 @@ export default function FilterSidebar({ onFilterChange, onReset }: FilterSidebar
                             Сбросить
                         </button>
                     </h3>
+                </div>
+
+                {/* Salary Filter */}
+                <div className="mb-6">
+                    <h4 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
+                        Зарплата (₽)
+                    </h4>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                placeholder="От"
+                                value={salaryRange[0] || ""}
+                                onChange={(e) => {
+                                    const val = Math.min(Number(e.target.value), salaryRange[1]);
+                                    setSalaryRange([val, salaryRange[1]]);
+                                    applySalaryFilter();
+                                }}
+                                onBlur={applySalaryFilter}
+                                className="w-1/2 rounded-[var(--radius-button)] border border-[var(--border)] bg-transparent px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+                            />
+                            <span className="text-[var(--muted)]">-</span>
+                            <input
+                                type="number"
+                                placeholder="До"
+                                value={salaryRange[1] || ""}
+                                onChange={(e) => {
+                                    const val = Math.max(Number(e.target.value), salaryRange[0]);
+                                    setSalaryRange([salaryRange[0], val]);
+                                    applySalaryFilter();
+                                }}
+                                onBlur={applySalaryFilter}
+                                className="w-1/2 rounded-[var(--radius-button)] border border-[var(--border)] bg-transparent px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none"
+                            />
+                        </div>
+                        <div className="px-2" onMouseUp={applySalaryFilter} onTouchEnd={applySalaryFilter}>
+                            <SalarySlider
+                                min={0}
+                                max={300000}
+                                step={5000}
+                                value={salaryRange}
+                                onChange={handleSalaryChange}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Schedule */}

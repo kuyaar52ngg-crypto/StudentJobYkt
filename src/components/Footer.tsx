@@ -9,7 +9,7 @@ export default function Footer() {
                     {/* Brand */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-xl shadow-lg border border-white/5" />
+                            <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-xl shadow-lg border border-white/5 object-contain" quality={95} />
                             <span className="text-white text-sm font-bold">StudentJobYkt</span>
                         </div>
                         <p className="text-xs leading-relaxed">

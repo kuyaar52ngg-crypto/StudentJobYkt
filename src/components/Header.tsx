@@ -42,7 +42,9 @@ export default function Header() {
                             alt="SJ Logo"
                             width={32}
                             height={32}
-                            className="rounded-lg object-cover"
+                            className="rounded-lg object-contain"
+                            quality={100}
+                            priority
                         />
                         <span className="text-lg font-bold tracking-tight hidden sm:inline">
                             StudentJobYkt

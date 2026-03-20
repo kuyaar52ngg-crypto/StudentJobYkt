@@ -73,7 +73,8 @@ export default function RegisterPage() {
                             alt="SJ Logo"
                             width={48}
                             height={48}
-                            className="rounded-2xl object-cover mx-auto mb-4"
+                            className="rounded-xl object-contain mx-auto"
+                            quality={95}
                         />
                         <h1 className="text-2xl font-bold">Регистрация</h1>
                         <p className="text-sm text-[var(--muted)] mt-2">

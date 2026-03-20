@@ -29,11 +29,23 @@ interface Vacancy {
     company: CompanyInfo;
 }
 
+interface Company {
+    id: string;
+    name: string;
+    logo?: string | null;
+    isVerified: boolean;
+    description?: string | null;
+    industry?: string | null;
+    createdAt: string;
+    user: { id: string; name: string; email: string; isBlocked: boolean };
+    _count: { vacancies: number };
+}
+
 export default function AdminDashboardPage() {
     const { user, loading: authLoading } = useAuth();
     const status = authLoading ? "loading" : user ? "authenticated" : "unauthenticated";
 
-    const [activeTab, setActiveTab] = useState<"moderation" | "vacancies">("moderation");
+    const [activeTab, setActiveTab] = useState<"moderation" | "vacancies" | "companies">("moderation");
     const [stats, setStats] = useState<Stats>({ users: 0, vacancies: 0, applications: 0, conversionRate: 0 });
     const [statsLoading, setStatsLoading] = useState(true);
 
@@ -42,6 +54,9 @@ export default function AdminDashboardPage() {
 
     const [allVacancies, setAllVacancies] = useState<Vacancy[]>([]);
     const [allLoading, setAllLoading] = useState(false);
+
+    const [companies, setCompanies] = useState<Company[]>([]);
+    const [companiesLoading, setCompaniesLoading] = useState(false);
 
     // Editing State
     const [editingVacancy, setEditingVacancy] = useState<Vacancy | null>(null);
@@ -59,12 +74,18 @@ export default function AdminDashboardPage() {
                 .then(r => r.json())
                 .then(data => { if (Array.isArray(data)) setPending(data); })
                 .finally(() => setPendingLoading(false));
-        } else {
+        } else if (activeTab === "vacancies") {
             setAllLoading(true);
             fetch("/api/admin/vacancies?all=true")
                 .then(r => r.json())
                 .then(data => { if (Array.isArray(data)) setAllVacancies(data); })
                 .finally(() => setAllLoading(false));
+        } else if (activeTab === "companies") {
+            setCompaniesLoading(true);
+            fetch("/api/admin/companies")
+                .then(r => r.json())
+                .then(data => { if (Array.isArray(data)) setCompanies(data); })
+                .finally(() => setCompaniesLoading(false));
         }
     }, [activeTab]);
 
@@ -115,8 +136,7 @@ export default function AdminDashboardPage() {
                 body: JSON.stringify(editForm),
             });
             if (res.ok) {
-                const updated = await res.json();
-                setAllVacancies(prev => prev.map(v => v.id === updated.id ? { ...v, ...editForm } : v));
+                setAllVacancies(prev => prev.map(v => v.id === editingVacancy.id ? { ...v, ...editForm } : v));
                 setEditingVacancy(null);
                 alert("Изменения сохранены!");
             } else {
@@ -135,7 +155,6 @@ export default function AdminDashboardPage() {
             const res = await fetch(`/api/vacancies/${id}`, { method: "DELETE" });
             if (res.ok) {
                 setAllVacancies(prev => prev.filter(v => v.id !== id));
-                alert("Вакансия удалена");
             } else {
                 alert("Ошибка при удалении");
             }
@@ -144,11 +163,43 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleVerifyCompany = async (companyId: string, isVerified: boolean) => {
+        const res = await fetch(`/api/admin/companies/${companyId}/verify`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isVerified }),
+        });
+        if (res.ok) {
+            setCompanies(prev => prev.map(c =>
+                c.id === companyId ? { ...c, isVerified } : c
+            ));
+        }
+    };
+
+    const handleBanCompany = async (companyId: string, isBlocked: boolean) => {
+        const res = await fetch(`/api/admin/companies/${companyId}/ban`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isBlocked }),
+        });
+        if (res.ok) {
+            setCompanies(prev => prev.map(c =>
+                c.id === companyId ? { ...c, user: { ...c.user, isBlocked } } : c
+            ));
+        }
+    };
+
     const statCards = [
         { label: "Пользователей", value: stats.users, icon: "👥", color: "bg-[var(--accent-blue)]" },
         { label: "Вакансий", value: stats.vacancies, icon: "💼", color: "bg-[var(--accent-green)]" },
         { label: "Откликов", value: stats.applications, icon: "📋", color: "bg-[var(--accent-pink)]" },
         { label: "Конверсия", value: `${stats.conversionRate}%`, icon: "📊", color: "bg-[var(--accent-orange)]" },
+    ];
+
+    const tabItems = [
+        { key: "moderation" as const, label: "Модерация", icon: "🛡️" },
+        { key: "vacancies" as const, label: "Вакансии", icon: "📝" },
+        { key: "companies" as const, label: "Компании", icon: "🏢" },
     ];
 
     return (
@@ -170,22 +221,18 @@ export default function AdminDashboardPage() {
 
             {/* Tabs */}
             <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
-                <button
-                    onClick={() => setActiveTab("moderation")}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                        activeTab === "moderation" ? "bg-white shadow-sm text-[var(--primary)]" : "text-gray-500 hover:text-gray-700"
-                    }`}
-                >
-                    Модерация
-                </button>
-                <button
-                    onClick={() => setActiveTab("vacancies")}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                        activeTab === "vacancies" ? "bg-white shadow-sm text-[var(--primary)]" : "text-gray-500 hover:text-gray-700"
-                    }`}
-                >
-                    Редактирование
-                </button>
+                {tabItems.map(tab => (
+                    <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                            activeTab === tab.key ? "bg-white shadow-sm text-[var(--primary)]" : "text-gray-500 hover:text-gray-700"
+                        }`}
+                    >
+                        <span>{tab.icon}</span>
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
             {/* Moderation Tab */}
@@ -209,13 +256,9 @@ export default function AdminDashboardPage() {
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h3 className="font-semibold text-sm">{v.title}</h3>
-                                                {v.company.isVerified && (
-                                                    <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                                                        Verified
-                                                    </span>
-                                                )}
                                             </div>
                                             <p className="text-xs text-[var(--muted)]">{v.company.name} · {new Date(v.createdAt).toLocaleDateString("ru-RU")}</p>
+                                            {v.salary && <p className="text-xs font-medium mt-1">{v.salary}</p>}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
@@ -232,32 +275,72 @@ export default function AdminDashboardPage() {
                                             </button>
                                         </div>
                                     </div>
-                                    
-                                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-500 uppercase tracking-widest font-bold">Статус компании</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Vacancies Tab — Card Layout */}
+            {activeTab === "vacancies" && (
+                <div className="animate-fade-in">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="font-semibold text-lg">Все вакансии</h2>
+                        <span className="text-xs text-[var(--muted)]">Всего: {allVacancies.length}</span>
+                    </div>
+                    
+                    {allLoading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {[1, 2, 3].map(i => <div key={i} className="h-40 bg-gray-50 rounded-xl animate-pulse" />)}
+                        </div>
+                    ) : allVacancies.length === 0 ? (
+                        <div className="text-center py-12 text-[var(--muted)] bg-gray-50 rounded-2xl">Нет вакансий</div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {allVacancies.map((v) => (
+                                <div key={v.id} className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 flex flex-col gap-3 border border-[var(--border)]">
+                                    {/* Status badge */}
+                                    <div className="flex items-center justify-between">
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                            v.status === "APPROVED" ? "bg-green-100 text-green-700" :
+                                            v.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
+                                        }`}>
+                                            {v.status === "APPROVED" ? "Активна" : v.status === "PENDING" ? "На модерации" : "Отклонена"}
+                                        </span>
+                                        <span className="text-[10px] text-[var(--muted)]">
+                                            {new Date(v.createdAt).toLocaleDateString("ru-RU")}
+                                        </span>
+                                    </div>
+
+                                    {/* Title + Company */}
+                                    <div>
+                                        <h3 className="font-semibold text-sm mb-1">{v.title}</h3>
+                                        <p className="text-xs text-[var(--muted)]">{v.company.name}</p>
+                                    </div>
+
+                                    {/* Salary + Location */}
+                                    {(v.salary || v.location) && (
+                                        <div className="text-xs text-[var(--muted)]">
+                                            {v.salary && <span className="font-medium text-[var(--foreground)]">{v.salary}</span>}
+                                            {v.salary && v.location && " · "}
+                                            {v.location && <span>{v.location}</span>}
+                                        </div>
+                                    )}
+
+                                    {/* Actions */}
+                                    <div className="mt-auto pt-3 border-t border-[var(--border)] flex items-center gap-2">
                                         <button
-                                            onClick={async () => {
-                                                const newStatus = !v.company.isVerified;
-                                                const res = await fetch(`/api/admin/companies/${v.company.id}/verify`, {
-                                                    method: "PATCH",
-                                                    headers: { "Content-Type": "application/json" },
-                                                    body: JSON.stringify({ isVerified: newStatus }),
-                                                });
-                                                if (res.ok) {
-                                                    setPending(prev => prev.map(item => 
-                                                        item.company.id === v.company.id 
-                                                        ? { ...item, company: { ...item.company, isVerified: newStatus } }
-                                                        : item
-                                                    ));
-                                                }
-                                            }}
-                                            className={`text-[11px] px-3 py-1.5 rounded-lg transition-all font-bold ${
-                                                v.company.isVerified 
-                                                ? "bg-blue-500 text-white shadow-md shadow-blue-200" 
-                                                : "bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600"
-                                            }`}
+                                            onClick={() => handleEditClick(v)}
+                                            className="text-xs text-[var(--primary)] hover:underline font-medium"
                                         >
-                                            {v.company.isVerified ? "✓ Верифицирована" : "+ Верифицировать компанию"}
+                                            Редактировать
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(v.id)}
+                                            className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                                        >
+                                            Удалить
                                         </button>
                                     </div>
                                 </div>
@@ -267,63 +350,72 @@ export default function AdminDashboardPage() {
                 </div>
             )}
 
-            {/* Vacancies List Tab */}
-            {activeTab === "vacancies" && (
+            {/* Companies Tab */}
+            {activeTab === "companies" && (
                 <div className="animate-fade-in">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-semibold text-lg">Все вакансии</h2>
-                        <span className="text-xs text-[var(--muted)]">Всего: {allVacancies.length}</span>
-                    </div>
-                    
-                    {allLoading ? (
+                    <h2 className="font-semibold text-lg mb-4">Управление компаниями</h2>
+                    {companiesLoading ? (
                         <div className="space-y-4">
-                            {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-50 rounded-xl animate-pulse" />)}
+                            {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-50 rounded-xl animate-pulse" />)}
                         </div>
+                    ) : companies.length === 0 ? (
+                        <div className="text-center py-12 text-[var(--muted)] bg-gray-50 rounded-2xl">Нет зарегистрированных компаний</div>
                     ) : (
-                        <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] overflow-hidden">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-gray-50 text-[var(--muted)] font-medium text-xs uppercase tracking-wider">
-                                    <tr>
-                                        <th className="px-6 py-4">Вакансия</th>
-                                        <th className="px-6 py-4">Компания</th>
-                                        <th className="px-6 py-4">Статус</th>
-                                        <th className="px-6 py-4 text-right">Действие</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {allVacancies.map((v) => (
-                                        <tr key={v.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium">{v.title}</td>
-                                            <td className="px-6 py-4 text-[var(--muted)]">{v.company.name}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${
-                                                    v.status === "APPROVED" ? "bg-green-100 text-green-700" :
-                                                    v.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
-                                                }`}>
-                                                    {v.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-3">
-                                                    <button
-                                                        onClick={() => handleEditClick(v)}
-                                                        className="text-[var(--primary)] hover:underline font-medium"
-                                                    >
-                                                        Редактировать
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(v.id)}
-                                                        className="text-red-500 hover:text-red-700 transition-colors"
-                                                        title="Удалить вакансию"
-                                                    >
-                                                        Удалить
-                                                    </button>
+                        <div className="space-y-4">
+                            {companies.map(c => (
+                                <div key={c.id} className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 border border-[var(--border)]">
+                                    <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                                        {/* Logo + Info */}
+                                        <div className="flex items-start gap-4 flex-1 min-w-0">
+                                            <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 text-xl font-bold overflow-hidden border border-[var(--border)] shrink-0">
+                                                {c.logo ? (
+                                                    <img src={c.logo} alt={c.name} className="w-full h-full object-cover" />
+                                                ) : "🏢"}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3 className="font-semibold text-sm">{c.name}</h3>
+                                                    {c.isVerified && (
+                                                        <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold">✓</span>
+                                                    )}
+                                                    {c.user.isBlocked && (
+                                                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">Заблокирован</span>
+                                                    )}
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                <p className="text-xs text-[var(--muted)]">{c.user.email}</p>
+                                                <p className="text-xs text-[var(--muted)] mt-0.5">
+                                                    {c.industry && `${c.industry} · `}
+                                                    {c._count.vacancies} вакансий
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-2 flex-wrap shrink-0">
+                                            <button
+                                                onClick={() => handleVerifyCompany(c.id, !c.isVerified)}
+                                                className={`text-[11px] px-3 py-1.5 rounded-lg transition-all font-bold ${
+                                                    c.isVerified
+                                                    ? "bg-blue-500 text-white shadow-md shadow-blue-200"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600"
+                                                }`}
+                                            >
+                                                {c.isVerified ? "✓ Верифицирована" : "+ Верифицировать"}
+                                            </button>
+                                            <button
+                                                onClick={() => handleBanCompany(c.id, !c.user.isBlocked)}
+                                                className={`text-[11px] px-3 py-1.5 rounded-lg transition-all font-bold ${
+                                                    c.user.isBlocked
+                                                    ? "bg-red-500 text-white shadow-md shadow-red-200"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600"
+                                                }`}
+                                            >
+                                                {c.user.isBlocked ? "Разблокировать" : "Заблокировать"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>

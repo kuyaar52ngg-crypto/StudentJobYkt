@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function RegisterPage() {
-    const router = useRouter();
+    const { login } = useAuth();
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -14,6 +14,8 @@ export default function RegisterPage() {
         confirmPassword: "",
         role: "STUDENT",
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -56,12 +58,45 @@ export default function RegisterPage() {
                 return;
             }
 
-            router.push("/auth/login?registered=true");
+            // Auto-login after registration
+            const loginRes = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: form.email, password: form.password }),
+            });
+
+            if (loginRes.ok) {
+                const user = await loginRes.json();
+                await login(user);
+            } else {
+                // Fallback: redirect to home
+                window.location.href = "/";
+            }
         } catch {
             setError("Ошибка сервера");
             setLoading(false);
         }
     };
+
+    const EyeIcon = ({ show, onToggle }: { show: boolean; onToggle: () => void }) => (
+        <button
+            type="button"
+            onClick={onToggle}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            tabIndex={-1}
+        >
+            {show ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+            ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+            )}
+        </button>
+    );
 
     return (
         <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
@@ -149,32 +184,38 @@ export default function RegisterPage() {
                             <label htmlFor="register-password" className="block text-sm font-medium mb-1.5">
                                 Пароль
                             </label>
-                            <input
-                                id="register-password"
-                                name="password"
-                                type="password"
-                                value={form.password}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
-                                placeholder="Минимум 6 символов"
-                            />
+                            <div className="relative">
+                                <input
+                                    id="register-password"
+                                    name="password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-2.5 pr-11 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
+                                    placeholder="Минимум 6 символов"
+                                />
+                                <EyeIcon show={showPassword} onToggle={() => setShowPassword(!showPassword)} />
+                            </div>
                         </div>
 
                         <div>
                             <label htmlFor="register-confirm" className="block text-sm font-medium mb-1.5">
                                 Подтвердите пароль
                             </label>
-                            <input
-                                id="register-confirm"
-                                name="confirmPassword"
-                                type="password"
-                                value={form.confirmPassword}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
-                                placeholder="••••••••"
-                            />
+                            <div className="relative">
+                                <input
+                                    id="register-confirm"
+                                    name="confirmPassword"
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    value={form.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-2.5 pr-11 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all"
+                                    placeholder="••••••••"
+                                />
+                                <EyeIcon show={showConfirmPassword} onToggle={() => setShowConfirmPassword(!showConfirmPassword)} />
+                            </div>
                         </div>
 
                         <button

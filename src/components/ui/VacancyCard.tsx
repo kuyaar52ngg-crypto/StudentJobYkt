@@ -6,6 +6,7 @@ import Badge from "./Badge";
 import VerifiedBadge from "./VerifiedBadge";
 import { useState } from "react";
 import { Bookmark } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 interface VacancyCardProps {
     id: string;
@@ -20,6 +21,7 @@ interface VacancyCardProps {
     isApplied?: boolean;
     tags?: string[];
     accentColor?: "blue" | "pink" | "orange" | "green" | "purple";
+    onApplied?: (vacancyId: string) => void;
 }
 
 export default function VacancyCard({
@@ -32,11 +34,15 @@ export default function VacancyCard({
     location,
     date,
     isFavoriteInitial = false,
-    isApplied = false,
+    isApplied: isAppliedProp = false,
     tags = [],
     accentColor = "blue",
+    onApplied,
 }: VacancyCardProps) {
     const [isFavorite, setIsFavorite] = useState(isFavoriteInitial);
+    const [isApplied, setIsApplied] = useState(isAppliedProp);
+    const [applying, setApplying] = useState(false);
+    const { user } = useAuth();
 
     const borderColorMap: Record<string, string> = {
         blue: "border-t-blue-300",
@@ -64,6 +70,33 @@ export default function VacancyCard({
             }
         } catch {
             setIsFavorite(!newStatus); // Rollback
+        }
+    };
+
+    const handleApply = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!user?.id) {
+            window.location.href = "/auth/login";
+            return;
+        }
+
+        setApplying(true);
+        try {
+            const res = await fetch("/api/applications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ vacancyId: id }),
+            });
+            if (res.ok || res.status === 409) {
+                setIsApplied(true);
+                onApplied?.(id);
+            }
+        } catch {
+            // silently fail
+        } finally {
+            setApplying(false);
         }
     };
 
@@ -129,11 +162,15 @@ export default function VacancyCard({
                     </div>
                     {isApplied ? (
                         <div className="text-green-600 bg-green-50 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-green-100 shrink-0">
-                            Вы уже откликнулись
+                            ✓ Вы откликнулись
                         </div>
                     ) : (
-                        <button className="bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-transform active:scale-95 shadow-sm shrink-0">
-                            Откликнуться
+                        <button
+                            onClick={handleApply}
+                            disabled={applying}
+                            className="bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-transform active:scale-95 shadow-sm shrink-0 disabled:opacity-50"
+                        >
+                            {applying ? "..." : "Откликнуться"}
                         </button>
                     )}
                 </div>

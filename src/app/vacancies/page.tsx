@@ -14,6 +14,7 @@ interface Vacancy {
     requirements?: string | null;
     createdAt: string;
     isApplied?: boolean;
+    isFavorite?: boolean;
     company: { name: string; logo?: string | null; isVerified?: boolean };
 }
 
@@ -137,6 +138,7 @@ function VacanciesContent() {
                                             salary={v.salary || undefined}
                                             location={v.location || undefined}
                                             isApplied={v.isApplied}
+                                            isFavoriteInitial={v.isFavorite}
                                             date={new Date(v.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
                                             tags={v.requirements?.split(",").map((t) => t.trim()).filter(Boolean) || []}
                                             accentColor={accentColors[i % accentColors.length]}

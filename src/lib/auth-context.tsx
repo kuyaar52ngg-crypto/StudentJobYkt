@@ -61,13 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       setUser(data);
-      if (data.role === "ADMIN") {
-        router.push("/admin");
-      } else if (data.role === "EMPLOYER") {
-        router.push("/employer");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/");
     } finally {
       setLoading(false);
     }

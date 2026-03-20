@@ -53,6 +53,7 @@ export default function DashboardPage() {
         birthdayDay: "", birthdayMonth: "", birthdayYear: "", avatarUrl: "",
     });
     const [profileLoading, setProfileLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveMsg, setSaveMsg] = useState("");
 
@@ -143,6 +144,7 @@ export default function DashboardPage() {
             });
             if (res.ok) {
                 setSaveMsg("Данные сохранены!");
+                setIsEditing(false);
                 refresh();
             } else {
                 setSaveMsg("Ошибка сохранения");
@@ -177,6 +179,15 @@ export default function DashboardPage() {
         { key: "applications", label: "Мои отклики", icon: "📋" },
     ];
 
+    // Format birthday for view mode
+    const getBirthdayString = () => {
+        if (!profile.birthdayDay || profile.birthdayMonth === "" || !profile.birthdayYear) return "";
+        const monthIdx = parseInt(profile.birthdayMonth);
+        return `${profile.birthdayDay} ${months[monthIdx] || ""} ${profile.birthdayYear}`;
+    };
+
+    const genderLabel = profile.gender === "male" ? "Мужской" : profile.gender === "female" ? "Женский" : "";
+
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <h1 className="text-2xl font-bold mb-6">Личный кабинет</h1>
@@ -202,11 +213,23 @@ export default function DashboardPage() {
             {/* Profile Tab */}
             {activeTab === "profile" && (
                 <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6 sm:p-8 animate-fade-in-up">
-                    <h2 className="text-xl font-bold mb-6">Личная информация</h2>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold">Личная информация</h2>
+                        {!isEditing && (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="text-sm text-[var(--primary)] hover:underline font-medium flex items-center gap-1"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                Редактировать
+                            </button>
+                        )}
+                    </div>
 
                     {/* Avatar */}
                     <div className="flex flex-col gap-4 mb-8">
-                        <label className="block text-sm font-medium">Фото профиля</label>
                         <div className="flex items-center gap-6">
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-2xl bg-amber-400 flex items-center justify-center text-white text-3xl font-bold overflow-hidden border-2 border-white shadow-lg transition-transform group-hover:scale-[1.02]">
@@ -214,29 +237,33 @@ export default function DashboardPage() {
                                         <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                                     ) : initials}
                                 </div>
-                                <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
-                                    Изменить
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChangeCapture={(e) => {
-                                            const file = (e.currentTarget as HTMLInputElement).files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    setProfile({ ...profile, avatarUrl: reader.result as string });
-                                                };
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                    />
-                                </label>
+                                {isEditing && (
+                                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                                        Изменить
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChangeCapture={(e) => {
+                                                const file = (e.currentTarget as HTMLInputElement).files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setProfile({ ...profile, avatarUrl: reader.result as string });
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                )}
                             </div>
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-[var(--foreground)]">Выберите фото</p>
-                                <p className="text-[11px] text-[var(--muted)] mt-1 max-w-[200px]">Нажмите на квадрат, чтобы загрузить изображение с вашего устройства</p>
-                            </div>
+                            {isEditing && (
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-[var(--foreground)]">Выберите фото</p>
+                                    <p className="text-[11px] text-[var(--muted)] mt-1 max-w-[200px]">Нажмите на квадрат, чтобы загрузить изображение с вашего устройства</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -244,55 +271,33 @@ export default function DashboardPage() {
                         <div className="space-y-4">
                             {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />)}
                         </div>
-                    ) : (
+                    ) : isEditing ? (
+                        /* Edit mode */
                         <div className="space-y-6">
-                            {/* Name */}
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Ваше имя</label>
-                                <input
-                                    type="text"
-                                    value={profile.name}
-                                    onChange={e => setProfile({...profile, name: e.target.value})}
-                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="Иванов Иван"
-                                />
-                                <p className="text-xs text-[var(--muted)] mt-1">Имя отображается рядом с логином</p>
+                                <input type="text" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Иванов Иван" />
                             </div>
 
                             {/* Birthday */}
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">День рождения</label>
                                 <div className="flex gap-2 flex-wrap">
-                                    <select
-                                        value={profile.birthdayDay}
-                                        onChange={e => setProfile({...profile, birthdayDay: e.target.value})}
-                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
-                                    >
+                                    <select value={profile.birthdayDay} onChange={e => setProfile({...profile, birthdayDay: e.target.value})}
+                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                                         <option value="">День</option>
-                                        {Array.from({length: 31}, (_, i) => (
-                                            <option key={i+1} value={String(i+1)}>{i+1}</option>
-                                        ))}
+                                        {Array.from({length: 31}, (_, i) => (<option key={i+1} value={String(i+1)}>{i+1}</option>))}
                                     </select>
-                                    <select
-                                        value={profile.birthdayMonth}
-                                        onChange={e => setProfile({...profile, birthdayMonth: e.target.value})}
-                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
-                                    >
+                                    <select value={profile.birthdayMonth} onChange={e => setProfile({...profile, birthdayMonth: e.target.value})}
+                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                                         <option value="">Месяц</option>
-                                        {months.map((m, i) => (
-                                            <option key={i} value={String(i)}>{m}</option>
-                                        ))}
+                                        {months.map((m, i) => (<option key={i} value={String(i)}>{m}</option>))}
                                     </select>
-                                    <select
-                                        value={profile.birthdayYear}
-                                        onChange={e => setProfile({...profile, birthdayYear: e.target.value})}
-                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
-                                    >
+                                    <select value={profile.birthdayYear} onChange={e => setProfile({...profile, birthdayYear: e.target.value})}
+                                        className="px-3 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                                         <option value="">Год</option>
-                                        {Array.from({length: 30}, (_, i) => {
-                                            const y = 2010 - i;
-                                            return <option key={y} value={String(y)}>{y}</option>;
-                                        })}
+                                        {Array.from({length: 30}, (_, i) => { const y = 2010 - i; return <option key={y} value={String(y)}>{y}</option>; })}
                                     </select>
                                 </div>
                             </div>
@@ -303,75 +308,46 @@ export default function DashboardPage() {
                                 <div className="space-y-2">
                                     {[{v: "male", l: "Мужской"}, {v: "female", l: "Женский"}, {v: "", l: "Не выбрано"}].map(g => (
                                         <label key={g.v} className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name="gender"
-                                                checked={profile.gender === g.v}
-                                                onChange={() => setProfile({...profile, gender: g.v})}
-                                                className="w-4 h-4 accent-[var(--primary)]"
-                                            />
+                                            <input type="radio" name="gender" checked={profile.gender === g.v}
+                                                onChange={() => setProfile({...profile, gender: g.v})} className="w-4 h-4 accent-[var(--primary)]" />
                                             <span className="text-sm">{g.l}</span>
                                         </label>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Phone */}
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Телефон</label>
-                                <input
-                                    type="tel"
-                                    value={profile.phone}
-                                    onChange={e => setProfile({...profile, phone: e.target.value})}
-                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="+7 (999) 123-45-67"
-                                />
+                                <input type="tel" value={profile.phone} onChange={e => setProfile({...profile, phone: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="+7 (999) 123-45-67" />
                             </div>
 
-                            {/* University */}
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Университет</label>
-                                <input
-                                    type="text"
-                                    value={profile.university}
-                                    onChange={e => setProfile({...profile, university: e.target.value})}
-                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="СВФУ, ЯГУ и т.д."
-                                />
+                                <input type="text" value={profile.university} onChange={e => setProfile({...profile, university: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="СВФУ, ЯГУ и т.д." />
                             </div>
 
-                            {/* Major */}
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Специальность</label>
-                                <input
-                                    type="text"
-                                    value={profile.major}
-                                    onChange={e => setProfile({...profile, major: e.target.value})}
-                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="Программная инженерия"
-                                />
+                                <input type="text" value={profile.major} onChange={e => setProfile({...profile, major: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Программная инженерия" />
                             </div>
 
-                            {/* Skills */}
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Навыки</label>
-                                <input
-                                    type="text"
-                                    value={profile.skills}
-                                    onChange={e => setProfile({...profile, skills: e.target.value})}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="React, TypeScript, Python..."
-                                />
+                                <input type="text" value={profile.skills} onChange={e => setProfile({...profile, skills: e.target.value})}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="React, TypeScript, Python..." />
                             </div>
 
-                            {/* Save button */}
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={handleSaveProfile}
-                                    disabled={saving}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-2.5 rounded-xl transition-colors disabled:opacity-50"
-                                >
+                            <div className="flex items-center gap-3">
+                                <button onClick={handleSaveProfile} disabled={saving}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-2.5 rounded-xl transition-colors disabled:opacity-50">
                                     {saving ? "Сохранение..." : "Сохранить"}
+                                </button>
+                                <button onClick={() => setIsEditing(false)}
+                                    className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] px-4 py-2.5 rounded-xl border border-[var(--border)] hover:bg-gray-50 transition-colors">
+                                    Отмена
                                 </button>
                                 {saveMsg && (
                                     <span className={`text-sm ${saveMsg.includes("Ошибка") ? "text-red-500" : "text-green-600"}`}>
@@ -379,6 +355,17 @@ export default function DashboardPage() {
                                     </span>
                                 )}
                             </div>
+                        </div>
+                    ) : (
+                        /* View mode */
+                        <div className="space-y-5">
+                            <InfoRow label="Имя" value={profile.name} />
+                            <InfoRow label="День рождения" value={getBirthdayString()} />
+                            <InfoRow label="Пол" value={genderLabel} />
+                            <InfoRow label="Телефон" value={profile.phone} />
+                            <InfoRow label="Университет" value={profile.university} />
+                            <InfoRow label="Специальность" value={profile.major} />
+                            <InfoRow label="Навыки" value={profile.skills} />
                         </div>
                     )}
                 </div>
@@ -468,6 +455,15 @@ export default function DashboardPage() {
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+function InfoRow({ label, value }: { label: string; value?: string }) {
+    return (
+        <div>
+            <p className="text-[11px] text-[var(--muted)] uppercase tracking-wider font-bold mb-0.5">{label}</p>
+            <p className="text-sm text-[var(--foreground)]">{value || "—"}</p>
         </div>
     );
 }

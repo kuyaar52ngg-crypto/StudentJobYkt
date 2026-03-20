@@ -95,6 +95,9 @@ export async function DELETE(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
+        // Delete related records first to avoid FK constraint errors
+        await prisma.application.deleteMany({ where: { vacancyId: id } });
+        await prisma.favorite.deleteMany({ where: { vacancyId: id } });
         await prisma.vacancy.delete({ where: { id } });
         return NextResponse.json({ message: "Вакансия удалена" });
     } catch (error) {

@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
             const applications = await prisma.application.findMany({
                 where,
                 include: {
-                    user: { select: { id: true, name: true, email: true, university: true, resumeUrl: true } },
+                    user: { select: { id: true, name: true, email: true, university: true, resumeUrl: true, phone: true, skills: true, major: true, gender: true } },
                     vacancy: {
                         include: {
                             company: { select: { id: true, name: true, logo: true } },

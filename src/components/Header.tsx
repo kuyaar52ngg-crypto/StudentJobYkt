@@ -211,6 +211,36 @@ export default function Header() {
                                 {link.label}
                             </Link>
                         ))}
+                        {user && user.role && roleLinks[user.role] && (
+                            <Link
+                                href={roleLinks[user.role].href}
+                                onClick={() => setMobileOpen(false)}
+                                className={`text-sm px-2 py-1.5 rounded-lg transition-colors ${pathname === roleLinks[user.role].href
+                                    ? "text-white bg-white/10"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                {roleLinks[user.role].label}
+                            </Link>
+                        )}
+                        {!user && status !== "loading" && (
+                            <>
+                                <Link
+                                    href="/auth/login"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="text-sm px-2 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                                >
+                                    Войти
+                                </Link>
+                                <Link
+                                    href="/auth/register"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="text-sm px-2 py-1.5 rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors text-center"
+                                >
+                                    Регистрация
+                                </Link>
+                            </>
+                        )}
                     </nav>
                 )}
             </div>

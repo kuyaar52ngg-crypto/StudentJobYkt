@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
             description: true,
             industry: true,
             contactInfo: true,
+            isVerified: true,
           },
         },
       },

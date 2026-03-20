@@ -58,15 +58,18 @@ export async function GET(req: NextRequest) {
                 category: { select: { id: true, name: true } },
                 _count: { select: { applications: true } },
                 applications: user ? { where: { userId: user.userId }, select: { id: true } } : false,
+                favorites: user ? { where: { userId: user.userId }, select: { id: true } } : false,
             },
             orderBy,
         });
 
-        // Map to include isApplied field
+        // Map to include isApplied and isFavorite fields
         const formattedVacancies = vacancies.map((v: any) => ({
             ...v,
             isApplied: v.applications && v.applications.length > 0,
+            isFavorite: v.favorites && v.favorites.length > 0,
             applications: undefined, // Remove the raw applications data
+            favorites: undefined, // Remove the raw favorites data
         }));
 
         return NextResponse.json(formattedVacancies);

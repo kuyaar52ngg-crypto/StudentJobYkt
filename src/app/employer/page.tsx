@@ -21,7 +21,7 @@ interface Application {
     id: string;
     status: string;
     createdAt: string;
-    user: { id: string; name: string; email: string; university?: string; resumeUrl?: string };
+    user: { id: string; name: string; email: string; university?: string; resumeUrl?: string; phone?: string; skills?: string; major?: string; gender?: string };
     vacancy: { title: string; company: { name: string } };
 }
 
@@ -45,6 +45,7 @@ export default function EmployerDashboardPage() {
         name: "", description: "", industry: "", contactInfo: "", phone: "", logo: "", isVerified: false,
     });
     const [profileLoading, setProfileLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveMsg, setSaveMsg] = useState("");
 
@@ -56,6 +57,7 @@ export default function EmployerDashboardPage() {
     // Applications
     const [applications, setApplications] = useState<Application[]>([]);
     const [appsLoading, setAppsLoading] = useState(true);
+    const [expandedApp, setExpandedApp] = useState<string | null>(null);
 
     // Load profile
     useEffect(() => {
@@ -125,6 +127,7 @@ export default function EmployerDashboardPage() {
             });
             if (res.ok) {
                 setSaveMsg("Данные сохранены!");
+                setIsEditing(false);
                 await refresh();
             } else {
                 setSaveMsg("Ошибка сохранения");
@@ -198,11 +201,31 @@ export default function EmployerDashboardPage() {
             {/* Profile Tab */}
             {activeTab === "profile" && (
                 <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6 sm:p-8 animate-fade-in-up">
-                    <h2 className="text-xl font-bold mb-6">Данные компании</h2>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-xl font-bold">Данные компании</h2>
+                            {companyProfile.isVerified && (
+                                <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-xs font-bold">
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    Верифицировано
+                                </div>
+                            )}
+                        </div>
+                        {!isEditing && (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="text-sm text-[var(--primary)] hover:underline font-medium flex items-center gap-1"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                Редактировать
+                            </button>
+                        )}
+                    </div>
 
                     {/* Logo */}
                     <div className="flex flex-col gap-4 mb-8">
-                        <label className="block text-sm font-medium">Логотип компании</label>
                         <div className="flex items-center gap-6">
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 text-3xl font-bold overflow-hidden border-2 border-[var(--border)] shadow-lg transition-transform group-hover:scale-[1.02]">
@@ -210,64 +233,45 @@ export default function EmployerDashboardPage() {
                                         <img src={companyProfile.logo} alt="Logo" className="w-full h-full object-cover" />
                                     ) : "🏢"}
                                 </div>
-                                <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
-                                    Изменить
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChangeCapture={(e) => {
-                                            const file = (e.currentTarget as HTMLInputElement).files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    const img = new (window as any).Image();
-                                                    img.onload = () => {
-                                                        const canvas = document.createElement("canvas");
-                                                        const MAX_WIDTH = 400;
-                                                        const MAX_HEIGHT = 400;
-                                                        let width = img.width;
-                                                        let height = img.height;
-
-                                                        if (width > height) {
-                                                            if (width > MAX_WIDTH) {
-                                                                height *= MAX_WIDTH / width;
-                                                                width = MAX_WIDTH;
+                                {isEditing && (
+                                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                                        Изменить
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChangeCapture={(e) => {
+                                                const file = (e.currentTarget as HTMLInputElement).files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        const img = new (window as any).Image();
+                                                        img.onload = () => {
+                                                            const canvas = document.createElement("canvas");
+                                                            const MAX_WIDTH = 400;
+                                                            const MAX_HEIGHT = 400;
+                                                            let width = img.width;
+                                                            let height = img.height;
+                                                            if (width > height) {
+                                                                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                                                            } else {
+                                                                if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                                                             }
-                                                        } else {
-                                                            if (height > MAX_HEIGHT) {
-                                                                width *= MAX_HEIGHT / height;
-                                                                height = MAX_HEIGHT;
-                                                            }
-                                                        }
-                                                        canvas.width = width;
-                                                        canvas.height = height;
-                                                        const ctx = canvas.getContext("2d");
-                                                        ctx?.drawImage(img, 0, 0, width, height);
-                                                        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-                                                        setCompanyProfile({ ...companyProfile, logo: dataUrl });
+                                                            canvas.width = width;
+                                                            canvas.height = height;
+                                                            const ctx = canvas.getContext("2d");
+                                                            ctx?.drawImage(img, 0, 0, width, height);
+                                                            const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+                                                            setCompanyProfile({ ...companyProfile, logo: dataUrl });
+                                                        };
+                                                        img.src = reader.result as string;
                                                     };
-                                                    img.src = reader.result as string;
-                                                };
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                    />
-                                </label>
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <p className="text-sm font-medium text-[var(--foreground)]">Загрузите логотип</p>
-                                    {companyProfile.isVerified && (
-                                        <div className="group relative">
-                                            <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500/10" />
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                                Официальный аккаунт
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                                <p className="text-[11px] text-[var(--muted)] max-w-[200px]">Нажмите на квадрат, чтобы загрузить логотип вашей компании с устройства</p>
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -276,70 +280,42 @@ export default function EmployerDashboardPage() {
                         <div className="space-y-4">
                             {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />)}
                         </div>
-                    ) : (
+                    ) : isEditing ? (
+                        /* Edit mode */
                         <div className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Название компании</label>
-                                <input
-                                    type="text"
-                                    value={companyProfile.name}
-                                    onChange={e => setCompanyProfile({...companyProfile, name: e.target.value})}
-                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder='ООО «Компания»'
-                                />
+                                <input type="text" value={companyProfile.name} onChange={e => setCompanyProfile({...companyProfile, name: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder='ООО «Компания»' />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Описание</label>
-                                <textarea
-                                    value={companyProfile.description}
-                                    onChange={e => setCompanyProfile({...companyProfile, description: e.target.value})}
-                                    rows={4}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-y"
-                                    placeholder="Расскажите о вашей компании..."
-                                />
+                                <textarea value={companyProfile.description} onChange={e => setCompanyProfile({...companyProfile, description: e.target.value})} rows={4}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-y" placeholder="Расскажите о вашей компании..." />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Отрасль</label>
-                                <input
-                                    type="text"
-                                    value={companyProfile.industry}
-                                    onChange={e => setCompanyProfile({...companyProfile, industry: e.target.value})}
-                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="IT, Торговля, Образование..."
-                                />
+                                <input type="text" value={companyProfile.industry} onChange={e => setCompanyProfile({...companyProfile, industry: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="IT, Торговля, Образование..." />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Контактная информация</label>
-                                <input
-                                    type="text"
-                                    value={companyProfile.contactInfo}
-                                    onChange={e => setCompanyProfile({...companyProfile, contactInfo: e.target.value})}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="Email, телефон, адрес..."
-                                />
+                                <input type="text" value={companyProfile.contactInfo} onChange={e => setCompanyProfile({...companyProfile, contactInfo: e.target.value})}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Email, телефон, адрес..." />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium mb-1.5">Телефон</label>
-                                <input
-                                    type="tel"
-                                    value={companyProfile.phone}
-                                    onChange={e => setCompanyProfile({...companyProfile, phone: e.target.value})}
-                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="+7 (999) 123-45-67"
-                                />
+                                <input type="tel" value={companyProfile.phone} onChange={e => setCompanyProfile({...companyProfile, phone: e.target.value})}
+                                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="+7 (999) 123-45-67" />
                             </div>
-
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={handleSaveProfile}
-                                    disabled={saving}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-2.5 rounded-xl transition-colors disabled:opacity-50"
-                                >
+                            <div className="flex items-center gap-3">
+                                <button onClick={handleSaveProfile} disabled={saving}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-2.5 rounded-xl transition-colors disabled:opacity-50">
                                     {saving ? "Сохранение..." : "Сохранить"}
+                                </button>
+                                <button onClick={() => setIsEditing(false)}
+                                    className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] px-4 py-2.5 rounded-xl border border-[var(--border)] hover:bg-gray-50 transition-colors">
+                                    Отмена
                                 </button>
                                 {saveMsg && (
                                     <span className={`text-sm ${saveMsg.includes("Ошибка") ? "text-red-500" : "text-green-600"}`}>
@@ -347,6 +323,15 @@ export default function EmployerDashboardPage() {
                                     </span>
                                 )}
                             </div>
+                        </div>
+                    ) : (
+                        /* View mode */
+                        <div className="space-y-5">
+                            <InfoRow label="Название компании" value={companyProfile.name} />
+                            <InfoRow label="Описание" value={companyProfile.description} />
+                            <InfoRow label="Отрасль" value={companyProfile.industry} />
+                            <InfoRow label="Контактная информация" value={companyProfile.contactInfo} />
+                            <InfoRow label="Телефон" value={companyProfile.phone} />
                         </div>
                     )}
                 </div>
@@ -388,7 +373,13 @@ export default function EmployerDashboardPage() {
                                         <div>
                                             <h3 className="font-semibold text-sm">{v.title}</h3>
                                             <p className="text-xs text-[var(--muted)]">
-                                                {new Date(v.createdAt).toLocaleDateString("ru-RU")} · {v._count?.applications || 0} откликов
+                                                {new Date(v.createdAt).toLocaleDateString("ru-RU")} ·{" "}
+                                                <button
+                                                    onClick={() => { setActiveTab("applications"); }}
+                                                    className="text-[var(--primary)] hover:underline"
+                                                >
+                                                    {v._count?.applications || 0} откликов
+                                                </button>
                                                 {v.salary && ` · ${v.salary}`}
                                             </p>
                                         </div>
@@ -456,42 +447,71 @@ export default function EmployerDashboardPage() {
                             {applications.filter(a => a.vacancy).map(app => (
                                 <div
                                     key={app.id}
-                                    className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5"
+                                    className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-5 border border-[var(--border)]"
                                 >
+                                    {/* Summary row */}
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                                        <div>
-                                            <h3 className="font-semibold text-sm">{app.user.name}</h3>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="font-semibold text-sm">{app.user.name}</h3>
+                                                <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${appStatusColors[app.status] || "bg-gray-100"}`}>
+                                                    {appStatusLabels[app.status] || app.status}
+                                                </span>
+                                            </div>
                                             <p className="text-xs text-[var(--muted)]">
-                                                {app.user.email}
-                                                {app.user.university && ` · ${app.user.university}`}
-                                            </p>
-                                            <p className="text-xs text-[var(--muted)] mt-1">
                                                 Вакансия: <span className="font-medium text-[var(--foreground)]">{app.vacancy.title}</span>
                                                 {" · "}{new Date(app.createdAt).toLocaleDateString("ru-RU")}
                                             </p>
                                         </div>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`text-xs font-medium px-3 py-1 rounded-full ${appStatusColors[app.status] || "bg-gray-100"}`}>
-                                                {appStatusLabels[app.status] || app.status}
-                                            </span>
-                                            {app.status === "PENDING" && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleApplicationStatus(app.id, "INVITED")}
-                                                        className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg font-medium transition-colors"
-                                                    >
-                                                        Пригласить
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleApplicationStatus(app.id, "REJECTED")}
-                                                        className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg font-medium transition-colors"
-                                                    >
-                                                        Отказать
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
+                                        <button
+                                            onClick={() => setExpandedApp(expandedApp === app.id ? null : app.id)}
+                                            className="text-xs text-[var(--primary)] hover:underline font-medium shrink-0"
+                                        >
+                                            {expandedApp === app.id ? "Свернуть" : "Подробнее"}
+                                        </button>
                                     </div>
+
+                                    {/* Expanded details */}
+                                    {expandedApp === app.id && (
+                                        <div className="mt-4 pt-4 border-t border-[var(--border)] space-y-4 animate-fade-in-up">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <InfoRow label="Email" value={app.user.email} />
+                                                <InfoRow label="Телефон" value={app.user.phone || "Не указан"} />
+                                                <InfoRow label="Университет" value={app.user.university || "Не указан"} />
+                                                <InfoRow label="Специальность" value={app.user.major || "Не указана"} />
+                                                <InfoRow label="Навыки" value={app.user.skills || "Не указаны"} />
+                                                <InfoRow label="Пол" value={app.user.gender === "male" ? "Мужской" : app.user.gender === "female" ? "Женский" : "Не указан"} />
+                                            </div>
+
+                                            <div className="flex items-center gap-2 flex-wrap pt-2">
+                                                <a
+                                                    href={`mailto:${app.user.email}`}
+                                                    className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                    </svg>
+                                                    Написать на почту
+                                                </a>
+                                                {app.status === "PENDING" && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleApplicationStatus(app.id, "INVITED")}
+                                                            className="text-xs bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                                        >
+                                                            Пригласить
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleApplicationStatus(app.id, "REJECTED")}
+                                                            className="text-xs bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                                        >
+                                                            Отказать
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -516,6 +536,15 @@ export default function EmployerDashboardPage() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function InfoRow({ label, value }: { label: string; value?: string }) {
+    return (
+        <div>
+            <p className="text-[11px] text-[var(--muted)] uppercase tracking-wider font-bold mb-0.5">{label}</p>
+            <p className="text-sm text-[var(--foreground)]">{value || "—"}</p>
         </div>
     );
 }

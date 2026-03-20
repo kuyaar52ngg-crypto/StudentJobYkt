@@ -14,14 +14,31 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const all = searchParams.get("all") === "true";
 
-        const vacancies = await prisma.vacancy.findMany({
-            where: all ? {} : { status: "PENDING" },
-            include: {
-                company: { select: { id: true, name: true, logo: true, isVerified: true } },
-                category: { select: { id: true, name: true } },
-            },
-            orderBy: { createdAt: "desc" },
-        });
+        let vacancies;
+        try {
+            vacancies = await prisma.vacancy.findMany({
+                where: all ? {} : { status: "PENDING" },
+                include: {
+                    company: { select: { id: true, name: true, logo: true, isVerified: true } },
+                    category: { select: { id: true, name: true } },
+                },
+                orderBy: { createdAt: "desc" },
+            });
+        } catch (error) {
+            console.error("Admin vacancies GET safe fallback:", error);
+            vacancies = await prisma.vacancy.findMany({
+                where: all ? {} : { status: "PENDING" },
+                select: {
+                    id: true, title: true, description: true, salary: true,
+                    schedule: true, employmentType: true, location: true,
+                    requirements: true, companyId: true, categoryId: true,
+                    status: true, createdAt: true, updatedAt: true,
+                    company: { select: { id: true, name: true, logo: true, isVerified: true } },
+                    category: { select: { id: true, name: true } },
+                },
+                orderBy: { createdAt: "desc" },
+            });
+        }
 
         return NextResponse.json(vacancies);
     } catch (error) {

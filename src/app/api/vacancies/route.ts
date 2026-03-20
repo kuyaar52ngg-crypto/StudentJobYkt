@@ -51,17 +51,38 @@ export async function GET(req: NextRequest) {
             orderBy = { salaryMax: "desc" };
         }
 
-        const vacancies = await prisma.vacancy.findMany({
-            where,
-            include: {
-                company: { select: { id: true, name: true, logo: true, isVerified: true } },
-                category: { select: { id: true, name: true } },
-                _count: { select: { applications: true } },
-                applications: user ? { where: { userId: user.userId }, select: { id: true } } : false,
-                favorites: user ? { where: { userId: user.userId }, select: { id: true } } : false,
-            },
-            orderBy,
-        });
+        let vacancies: any[];
+        try {
+            vacancies = await prisma.vacancy.findMany({
+                where,
+                include: {
+                    company: { select: { id: true, name: true, logo: true, isVerified: true } },
+                    category: { select: { id: true, name: true } },
+                    _count: { select: { applications: true } },
+                    applications: user ? { where: { userId: user.userId }, select: { id: true } } : false,
+                    favorites: user ? { where: { userId: user.userId }, select: { id: true } } : false,
+                },
+                orderBy,
+            });
+        } catch (error) {
+            console.error("Retrying with safe columns due to error:", error);
+            // Fallback for cases where DB is not yet synced with new columns
+            vacancies = await prisma.vacancy.findMany({
+                where,
+                select: {
+                    id: true, title: true, description: true, salary: true,
+                    schedule: true, employmentType: true, location: true,
+                    requirements: true, companyId: true, categoryId: true,
+                    status: true, createdAt: true, updatedAt: true,
+                    company: { select: { id: true, name: true, logo: true, isVerified: true } },
+                    category: { select: { id: true, name: true } },
+                    _count: { select: { applications: true } },
+                    applications: user ? { where: { userId: user.userId }, select: { id: true } } : false,
+                    favorites: user ? { where: { userId: user.userId }, select: { id: true } } : false,
+                },
+                orderBy: { createdAt: "desc" },
+            });
+        }
 
         // Map to include isApplied and isFavorite fields
         const formattedVacancies = vacancies.map((v: any) => ({
@@ -121,23 +142,43 @@ export async function POST(req: NextRequest) {
         const salaryMinInt = salaryMin ? parseInt(String(salaryMin)) : null;
         const salaryMaxInt = salaryMax ? parseInt(String(salaryMax)) : null;
 
-        const vacancy = await prisma.vacancy.create({
-            data: {
-                title,
-                description,
-                salary: salary || null,
-                salaryMin: (salaryMinInt !== null && !isNaN(salaryMinInt)) ? salaryMinInt : null,
-                salaryMax: (salaryMaxInt !== null && !isNaN(salaryMaxInt)) ? salaryMaxInt : null,
-                schedule,
-                employmentType,
-                location: location || "Якутск",
-                requirements: requirements || null,
-                companyId: company.id,
-                categoryId: categoryId || null,
-                currency: currency || "RUB",
-                status: "PENDING", // Wait for moderator approval
-            },
-        });
+        let vacancy;
+        try {
+            vacancy = await prisma.vacancy.create({
+                data: {
+                    title,
+                    description,
+                    salary: salary || null,
+                    salaryMin: (salaryMinInt !== null && !isNaN(salaryMinInt)) ? salaryMinInt : null,
+                    salaryMax: (salaryMaxInt !== null && !isNaN(salaryMaxInt)) ? salaryMaxInt : null,
+                    schedule,
+                    employmentType,
+                    location: location || "Якутск",
+                    requirements: requirements || null,
+                    companyId: company.id,
+                    categoryId: categoryId || null,
+                    currency: currency || "RUB",
+                    status: "PENDING", // Wait for moderator approval
+                },
+            });
+        } catch (error) {
+            console.error("Retrying POST with safe columns due to error:", error);
+            // Fallback: exclude new columns if DB not synced
+            vacancy = await prisma.vacancy.create({
+                data: {
+                    title,
+                    description,
+                    salary: salary || null,
+                    schedule,
+                    employmentType,
+                    location: location || "Якутск",
+                    requirements: requirements || null,
+                    companyId: company.id,
+                    categoryId: categoryId || null,
+                    status: "PENDING",
+                },
+            });
+        }
 
         return NextResponse.json(vacancy, { status: 201 });
     } catch (error: unknown) {

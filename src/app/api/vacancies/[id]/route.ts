@@ -10,14 +10,31 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const vacancy = await prisma.vacancy.findUnique({
-            where: { id },
-            include: {
-                company: true,
-                category: true,
-                _count: { select: { applications: true } },
-            },
-        });
+        let vacancy;
+        try {
+            vacancy = await prisma.vacancy.findUnique({
+                where: { id },
+                include: {
+                    company: true,
+                    category: true,
+                    _count: { select: { applications: true } },
+                },
+            });
+        } catch (error) {
+            console.error("Single vacancy GET safe fallback:", error);
+            vacancy = await prisma.vacancy.findUnique({
+                where: { id },
+                select: {
+                    id: true, title: true, description: true, salary: true,
+                    schedule: true, employmentType: true, location: true,
+                    requirements: true, companyId: true, categoryId: true,
+                    status: true, createdAt: true, updatedAt: true,
+                    company: true,
+                    category: true,
+                    _count: { select: { applications: true } },
+                },
+            });
+        }
 
         if (!vacancy) {
             return NextResponse.json({ error: "Вакансия не найдена" }, { status: 404 });
@@ -57,10 +74,20 @@ export async function PUT(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const updated = await prisma.vacancy.update({
-            where: { id },
-            data: body,
-        });
+        let updated;
+        try {
+            updated = await prisma.vacancy.update({
+                where: { id },
+                data: body,
+            });
+        } catch (error) {
+            console.error("Vacancy PUT safe fallback:", error);
+            const { salaryMin, salaryMax, currency, ...safeData } = body;
+            updated = await prisma.vacancy.update({
+                where: { id },
+                data: safeData,
+            });
+        }
 
         return NextResponse.json(updated);
     } catch (error) {

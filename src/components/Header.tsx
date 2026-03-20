@@ -54,10 +54,11 @@ export default function Header() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`text-sm transition-colors hover:text-white ${pathname === link.href
-                                    ? "text-white font-semibold"
-                                    : "text-gray-400"
-                                    }`}
+                                className={`text-sm transition-colors hover:text-white ${
+                                    pathname === link.href
+                                        ? "text-white font-semibold"
+                                        : "text-gray-400"
+                                }`}
                             >
                                 {link.label}
                             </Link>

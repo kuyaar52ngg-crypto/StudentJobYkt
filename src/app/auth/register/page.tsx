@@ -69,7 +69,7 @@ export default function RegisterPage() {
                 <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-8">
                     <div className="text-center mb-8">
                         <Image
-                            src="/logo.jpg"
+                            src="/logo.png"
                             alt="SJ Logo"
                             width={48}
                             height={48}

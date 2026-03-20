@@ -38,7 +38,7 @@ export default function Header() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 shrink-0">
                         <Image
-                            src="/logo.jpg"
+                            src="/logo.png"
                             alt="SJ Logo"
                             width={32}
                             height={32}

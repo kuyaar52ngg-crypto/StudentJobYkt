@@ -12,6 +12,10 @@ interface VacancyDetail {
     title: string;
     description: string;
     salary?: string | null;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    currency?: string | null;
+    isNegotiable?: boolean;
     schedule?: string | null;
     employmentType?: string | null;
     location?: string | null;
@@ -165,10 +169,21 @@ export default function VacancyDetailPage() {
                 <div className="lg:w-72 shrink-0">
                     <div className="bg-[var(--card-bg)] rounded-[var(--radius-card)] shadow-[var(--card-shadow)] p-6 space-y-4 sticky top-20">
                         {/* Salary */}
-                        {vacancy.salary && (
+                        {(vacancy.salaryMin || vacancy.salaryMax || vacancy.isNegotiable || vacancy.salary) && (
                             <div>
                                 <p className="text-xs text-[var(--muted)] mb-1">Зарплата</p>
-                                <p className="text-lg font-bold text-[var(--primary)]">{vacancy.salary}</p>
+                                <p className="text-lg font-bold text-[var(--primary)]">
+                                    {vacancy.isNegotiable ? "Договорная" : (
+                                        (vacancy.salaryMin || vacancy.salaryMax) ? (
+                                            <>
+                                                {vacancy.salaryMin && `от ${vacancy.salaryMin.toLocaleString("ru-RU")}`}
+                                                {vacancy.salaryMin && vacancy.salaryMax && " "}
+                                                {vacancy.salaryMax && `до ${vacancy.salaryMax.toLocaleString("ru-RU")}`}
+                                                {vacancy.currency && ` ${vacancy.currency === "RUB" ? "₽" : vacancy.currency === "USD" ? "$" : "€"}`}
+                                            </>
+                                        ) : vacancy.salary
+                                    )}
+                                </p>
                             </div>
                         )}
 

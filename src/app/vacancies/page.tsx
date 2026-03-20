@@ -13,6 +13,7 @@ interface Vacancy {
     salaryMin?: number | null;
     salaryMax?: number | null;
     currency?: string | null;
+    isNegotiable?: boolean;
     location?: string | null;
     requirements?: string | null;
     createdAt: string;
@@ -138,10 +139,10 @@ function VacanciesContent() {
                                             company={v.company.name}
                                             companyLogo={v.company.logo}
                                             isVerified={v.company.isVerified}
-                                            salary={v.salary || undefined}
                                             salaryMin={v.salaryMin}
                                             salaryMax={v.salaryMax}
                                             currency={v.currency || undefined}
+                                            isNegotiable={v.isNegotiable}
                                             location={v.location || undefined}
                                             isApplied={v.isApplied}
                                             isFavoriteInitial={v.isFavorite}

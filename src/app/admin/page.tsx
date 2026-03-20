@@ -22,6 +22,9 @@ interface Vacancy {
     title: string;
     description: string;
     salary?: string | null;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    currency?: string | null;
     location?: string | null;
     requirements?: string | null;
     status: string;
@@ -60,7 +63,16 @@ export default function AdminDashboardPage() {
 
     // Editing State
     const [editingVacancy, setEditingVacancy] = useState<Vacancy | null>(null);
-    const [editForm, setEditForm] = useState({ title: "", description: "", salary: "", location: "", requirements: "" });
+    const [editForm, setEditForm] = useState({ 
+        title: "", 
+        description: "", 
+        salary: "", 
+        location: "", 
+        requirements: "",
+        salaryMin: "" as string | number,
+        salaryMax: "" as string | number,
+        currency: "RUB"
+    });
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -123,6 +135,9 @@ export default function AdminDashboardPage() {
             salary: v.salary || "",
             location: v.location || "",
             requirements: v.requirements || "",
+            salaryMin: v.salaryMin ?? "",
+            salaryMax: v.salaryMax ?? "",
+            currency: v.currency || "RUB",
         });
     };
 
@@ -130,13 +145,20 @@ export default function AdminDashboardPage() {
         if (!editingVacancy) return;
         setSaving(true);
         try {
+            const payload = {
+                ...editForm,
+                salaryMin: editForm.salaryMin === "" ? null : Number(editForm.salaryMin),
+                salaryMax: editForm.salaryMax === "" ? null : Number(editForm.salaryMax),
+            };
             const res = await fetch(`/api/vacancies/${editingVacancy.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(editForm),
+                body: JSON.stringify(payload),
             });
             if (res.ok) {
-                setAllVacancies(prev => prev.map(v => v.id === editingVacancy.id ? { ...v, ...editForm } : v));
+                setAllVacancies(prev => prev.map(v => 
+                    v.id === editingVacancy.id ? { ...v, ...payload } : v
+                ));
                 setEditingVacancy(null);
                 alert("Изменения сохранены!");
             } else {
@@ -448,23 +470,45 @@ export default function AdminDashboardPage() {
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none resize-none"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Зарплата</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">От</label>
                                     <input
-                                        value={editForm.salary}
-                                        onChange={(e) => setEditForm({...editForm, salary: e.target.value})}
+                                        type="number"
+                                        value={editForm.salaryMin}
+                                        onChange={(e) => setEditForm({...editForm, salaryMin: e.target.value})}
                                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Город</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">До</label>
                                     <input
-                                        value={editForm.location}
-                                        onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                                        type="number"
+                                        value={editForm.salaryMax}
+                                        onChange={(e) => setEditForm({...editForm, salaryMax: e.target.value})}
                                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Валюта</label>
+                                    <select
+                                        value={editForm.currency}
+                                        onChange={(e) => setEditForm({...editForm, currency: e.target.value})}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none bg-white"
+                                    >
+                                        <option value="RUB">RUB (₽)</option>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Город</label>
+                                <input
+                                    value={editForm.location}
+                                    onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+                                />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Требования (через запятую)</label>

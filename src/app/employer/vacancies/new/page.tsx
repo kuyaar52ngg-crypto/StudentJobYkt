@@ -13,6 +13,9 @@ export default function NewVacancyPage() {
         title: "",
         description: "",
         salary: "",
+        salaryMin: "",
+        salaryMax: "",
+        currency: "RUB",
         schedule: "Полная занятость",
         employmentType: "Вакансия",
         location: "Якутск",
@@ -127,21 +130,53 @@ export default function NewVacancyPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="vacancy-salary" className="block text-sm font-medium mb-1.5">
-                                Зарплата
-                            </label>
-                            <input
-                                id="vacancy-salary"
-                                name="salary"
-                                type="text"
-                                value={form.salary}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                placeholder="от 25 000 ₽/мес"
-                            />
+                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label htmlFor="vacancy-salary-min" className="block text-sm font-medium mb-1.5">
+                                    Зарплата от
+                                </label>
+                                <input
+                                    id="vacancy-salary-min"
+                                    name="salaryMin"
+                                    type="number"
+                                    value={form.salaryMin}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="25000"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="vacancy-salary-max" className="block text-sm font-medium mb-1.5">
+                                    Зарплата до
+                                </label>
+                                <input
+                                    id="vacancy-salary-max"
+                                    name="salaryMax"
+                                    type="number"
+                                    value={form.salaryMax}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    placeholder="50000"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="vacancy-currency" className="block text-sm font-medium mb-1.5">
+                                    Валюта
+                                </label>
+                                <select
+                                    id="vacancy-currency"
+                                    name="currency"
+                                    value={form.currency}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                >
+                                    <option value="RUB">RUB (₽)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
+                        <div className="sm:col-span-2">
                             <label htmlFor="vacancy-location" className="block text-sm font-medium mb-1.5">
                                 Город
                             </label>

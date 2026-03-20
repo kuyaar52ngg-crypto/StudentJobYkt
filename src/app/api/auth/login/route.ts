@@ -17,6 +17,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
+    if (user.isBlocked) {
+      return NextResponse.json({ error: 'Ваш аккаунт заблокирован' }, { status: 403 });
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     
     if (!valid) {

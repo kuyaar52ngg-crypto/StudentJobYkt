@@ -17,6 +17,12 @@ export const metadata: Metadata = {
   keywords: ["работа", "студенты", "якутск", "вакансии", "стажировка", "практика"],
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

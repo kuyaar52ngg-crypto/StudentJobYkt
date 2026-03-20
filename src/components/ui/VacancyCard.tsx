@@ -15,6 +15,9 @@ interface VacancyCardProps {
     companyLogo?: string | null;
     isVerified?: boolean;
     salary?: string;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    currency?: string;
     location?: string;
     date: string;
     isFavoriteInitial?: boolean;
@@ -31,6 +34,9 @@ export default function VacancyCard({
     companyLogo,
     isVerified,
     salary,
+    salaryMin,
+    salaryMax,
+    currency = "RUB",
     location,
     date,
     isFavoriteInitial = false,
@@ -157,7 +163,24 @@ export default function VacancyCard({
                 {/* Bottom: salary + location + details */}
                 <div className="mt-auto pt-4 border-t border-[var(--border)] flex items-center justify-between">
                     <div className="min-w-0 flex-1 mr-2">
-                        {salary && <p className="text-sm font-bold text-gray-900 truncate">{salary}</p>}
+                        {(() => {
+                            const currencySymbols: Record<string, string> = {
+                                RUB: "₽",
+                                USD: "$",
+                                EUR: "€",
+                            };
+                            const symbol = currencySymbols[currency] || currency;
+                            if (salaryMin !== null && salaryMin !== undefined && salaryMax !== null && salaryMax !== undefined) {
+                                return <p className="text-sm font-bold text-gray-900 truncate">{salaryMin.toLocaleString("ru-RU")} - {salaryMax.toLocaleString("ru-RU")} {symbol}</p>;
+                            }
+                            if (salaryMin !== null && salaryMin !== undefined) {
+                                return <p className="text-sm font-bold text-gray-900 truncate">от {salaryMin.toLocaleString("ru-RU")} {symbol}</p>;
+                            }
+                            if (salaryMax !== null && salaryMax !== undefined) {
+                                return <p className="text-sm font-bold text-gray-900 truncate">до {salaryMax.toLocaleString("ru-RU")} {symbol}</p>;
+                            }
+                            return salary ? <p className="text-sm font-bold text-gray-900 truncate">{salary}</p> : null;
+                        })()}
                         {location && <p className="text-[11px] text-[var(--muted)] truncate">{location}</p>}
                     </div>
                     {isApplied ? (

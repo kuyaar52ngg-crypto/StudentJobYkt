@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
             location,
             requirements,
             categoryId,
+            currency,
         } = body;
 
         if (!title || !description) {
@@ -133,6 +134,7 @@ export async function POST(req: NextRequest) {
                 requirements: requirements || null,
                 companyId: company.id,
                 categoryId: categoryId || null,
+                currency: currency || "RUB",
                 status: "PENDING", // Wait for moderator approval
             },
         });

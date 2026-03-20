@@ -18,6 +18,9 @@ export default function EditVacancyPage({ params }: EditVacancyPageProps) {
         title: "",
         description: "",
         salary: "",
+        salaryMin: "" as string | number,
+        salaryMax: "" as string | number,
+        currency: "RUB",
         schedule: "",
         employmentType: "",
         location: "",
@@ -39,6 +42,9 @@ export default function EditVacancyPage({ params }: EditVacancyPageProps) {
                         title: data.title || "",
                         description: data.description || "",
                         salary: data.salary || "",
+                        salaryMin: data.salaryMin ?? "",
+                        salaryMax: data.salaryMax ?? "",
+                        currency: data.currency || "RUB",
                         schedule: data.schedule || "",
                         employmentType: data.employmentType || "",
                         location: data.location || "",
@@ -139,15 +145,34 @@ export default function EditVacancyPage({ params }: EditVacancyPageProps) {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="edit-salary" className="block text-sm font-medium mb-1.5">Зарплата</label>
-                            <input
-                                id="edit-salary" name="salary" type="text" value={form.salary} onChange={handleChange}
-                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                placeholder="от 25 000 ₽/мес"
-                            />
+                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label htmlFor="edit-salary-min" className="block text-sm font-medium mb-1.5">Зарплата от</label>
+                                <input
+                                    id="edit-salary-min" name="salaryMin" type="number" value={form.salaryMin} onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="edit-salary-max" className="block text-sm font-medium mb-1.5">Зарплата до</label>
+                                <input
+                                    id="edit-salary-max" name="salaryMax" type="number" value={form.salaryMax} onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="edit-currency" className="block text-sm font-medium mb-1.5">Валюта</label>
+                                <select
+                                    id="edit-currency" name="currency" value={form.currency} onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                >
+                                    <option value="RUB">RUB (₽)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
+                        <div className="sm:col-span-2">
                             <label htmlFor="edit-location" className="block text-sm font-medium mb-1.5">Город</label>
                             <input
                                 id="edit-location" name="location" type="text" value={form.location} onChange={handleChange}

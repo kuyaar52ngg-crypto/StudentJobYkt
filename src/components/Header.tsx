@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import Image from "next/image";
 
 const navLinks = [
-    { href: "/", label: "Поиск работы" },
+    { href: "/", label: "Главная" },
     { href: "/vacancies", label: "Вакансии" },
 ];
 
@@ -56,11 +56,10 @@ export default function Header() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`text-sm transition-colors hover:text-white ${
-                                    pathname === link.href
+                                className={`text-sm transition-colors hover:text-white ${pathname === link.href
                                         ? "text-white font-semibold"
                                         : "text-gray-400"
-                                }`}
+                                    }`}
                             >
                                 {link.label}
                             </Link>
@@ -102,13 +101,13 @@ export default function Header() {
                                             {(user.name || "U")[0].toUpperCase()}
                                         </div>
                                     )}
-                                    
+
                                     <span className="text-xs text-gray-300 group-hover:text-white transition-colors hidden sm:inline max-w-[100px] truncate">
                                         {user.role === 'EMPLOYER' && user.company?.name ? user.company.name : user.name}
                                     </span>
-                                    
-                                    <svg 
-                                        className={`w-3 h-3 text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} 
+
+                                    <svg
+                                        className={`w-3 h-3 text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
                                         fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                     >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -119,11 +118,11 @@ export default function Header() {
                                 {dropdownOpen && (
                                     <>
                                         {/* Overlay to close on click outside */}
-                                        <div 
-                                            className="fixed inset-0 z-10" 
+                                        <div
+                                            className="fixed inset-0 z-10"
                                             onClick={() => setDropdownOpen(false)}
                                         />
-                                        
+
                                         <div className="absolute right-0 mt-2 w-52 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl z-20 overflow-hidden animate-scale-in">
                                             <div className="p-4 border-b border-white/5">
                                                 <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Пользователь</p>
@@ -132,7 +131,7 @@ export default function Header() {
                                                 </p>
                                                 <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
                                             </div>
-                                            
+
                                             <div className="p-2">
                                                 {user.role && roleLinks[user.role] && (
                                                     <Link
@@ -146,7 +145,7 @@ export default function Header() {
                                                         Личный кабинет
                                                     </Link>
                                                 )}
-                                                
+
                                                 <button
                                                     onClick={handleLogout}
                                                     className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-red-100 hover:text-red-300 hover:bg-red-500/10 transition-all font-medium"

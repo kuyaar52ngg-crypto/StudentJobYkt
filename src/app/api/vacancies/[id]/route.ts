@@ -34,6 +34,9 @@ export async function GET(
                     _count: { select: { applications: true } },
                 },
             });
+            if (vacancy) {
+                (vacancy as any).isNegotiable = false;
+            }
         }
 
         if (!vacancy) {
@@ -74,15 +77,21 @@ export async function PUT(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
+        const dataToUpdate = { ...body };
+        if (dataToUpdate.isNegotiable) {
+            dataToUpdate.salaryMin = null;
+            dataToUpdate.salaryMax = null;
+        }
+
         let updated;
         try {
             updated = await prisma.vacancy.update({
                 where: { id },
-                data: body,
+                data: dataToUpdate,
             });
         } catch (error) {
             console.error("Vacancy PUT safe fallback:", error);
-            const { salaryMin, salaryMax, currency, ...safeData } = body;
+            const { salaryMin, salaryMax, currency, isNegotiable, ...safeData } = dataToUpdate;
             updated = await prisma.vacancy.update({
                 where: { id },
                 data: safeData,

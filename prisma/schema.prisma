@@ -89,6 +89,7 @@ model Vacancy {
   categoryId     String?
   status         VacancyStatus @default(PENDING)
   currency       String        @default("RUB")
+  isNegotiable   Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

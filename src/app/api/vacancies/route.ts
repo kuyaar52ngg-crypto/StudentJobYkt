@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
                     favorites: user ? { where: { userId: user.userId }, select: { id: true } } : false,
                 },
                 orderBy: { createdAt: "desc" },
-            });
+            }).then(v => v.map(vac => ({ ...vac, isNegotiable: false })));
         }
 
         // Map to include isApplied and isFavorite fields
@@ -125,6 +125,7 @@ export async function POST(req: NextRequest) {
             requirements,
             categoryId,
             currency,
+            isNegotiable,
         } = body;
 
         if (!title || !description) {
@@ -142,6 +143,10 @@ export async function POST(req: NextRequest) {
         const salaryMinInt = salaryMin ? parseInt(String(salaryMin)) : null;
         const salaryMaxInt = salaryMax ? parseInt(String(salaryMax)) : null;
 
+        const finalSalaryMin = isNegotiable ? null : ((salaryMinInt !== null && !isNaN(salaryMinInt)) ? salaryMinInt : null);
+        const finalSalaryMax = isNegotiable ? null : ((salaryMaxInt !== null && !isNaN(salaryMaxInt)) ? salaryMaxInt : null);
+        const finalCurrency = isNegotiable ? "RUB" : (currency || "RUB");
+
         let vacancy;
         try {
             vacancy = await prisma.vacancy.create({
@@ -149,15 +154,16 @@ export async function POST(req: NextRequest) {
                     title,
                     description,
                     salary: salary || null,
-                    salaryMin: (salaryMinInt !== null && !isNaN(salaryMinInt)) ? salaryMinInt : null,
-                    salaryMax: (salaryMaxInt !== null && !isNaN(salaryMaxInt)) ? salaryMaxInt : null,
+                    salaryMin: finalSalaryMin,
+                    salaryMax: finalSalaryMax,
                     schedule,
                     employmentType,
                     location: location || "Якутск",
                     requirements: requirements || null,
                     companyId: company.id,
                     categoryId: categoryId || null,
-                    currency: currency || "RUB",
+                    currency: finalCurrency,
+                    isNegotiable: !!isNegotiable,
                     status: "PENDING", // Wait for moderator approval
                 },
             });

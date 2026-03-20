@@ -21,10 +21,10 @@ interface Vacancy {
     id: string;
     title: string;
     description: string;
-    salary?: string | null;
     salaryMin?: number | null;
     salaryMax?: number | null;
     currency?: string | null;
+    isNegotiable?: boolean;
     location?: string | null;
     requirements?: string | null;
     status: string;
@@ -42,6 +42,18 @@ interface Company {
     createdAt: string;
     user: { id: string; name: string; email: string; isBlocked: boolean };
     _count: { vacancies: number };
+}
+
+interface EditFormState {
+    title: string;
+    description: string;
+    salary: string; // This field seems to be a legacy from previous implementation, not directly used for salaryMin/Max/currency
+    location: string;
+    requirements: string;
+    salaryMin: string | number;
+    salaryMax: string | number;
+    currency: string;
+    isNegotiable: boolean;
 }
 
 export default function AdminDashboardPage() {
@@ -63,15 +75,16 @@ export default function AdminDashboardPage() {
 
     // Editing State
     const [editingVacancy, setEditingVacancy] = useState<Vacancy | null>(null);
-    const [editForm, setEditForm] = useState({ 
+    const [editForm, setEditForm] = useState<EditFormState>({ 
         title: "", 
         description: "", 
         salary: "", 
         location: "", 
         requirements: "",
-        salaryMin: "" as string | number,
-        salaryMax: "" as string | number,
-        currency: "RUB"
+        salaryMin: "",
+        salaryMax: "",
+        currency: "RUB",
+        isNegotiable: false,
     });
     const [saving, setSaving] = useState(false);
 
@@ -132,12 +145,13 @@ export default function AdminDashboardPage() {
         setEditForm({
             title: v.title,
             description: v.description,
-            salary: v.salary || "",
+            salary: "", // This field is not directly mapped from Vacancy, keeping it empty
             location: v.location || "",
             requirements: v.requirements || "",
             salaryMin: v.salaryMin ?? "",
             salaryMax: v.salaryMax ?? "",
             currency: v.currency || "RUB",
+            isNegotiable: v.isNegotiable || false,
         });
     };
 
@@ -147,8 +161,9 @@ export default function AdminDashboardPage() {
         try {
             const payload = {
                 ...editForm,
-                salaryMin: editForm.salaryMin === "" ? null : Number(editForm.salaryMin),
-                salaryMax: editForm.salaryMax === "" ? null : Number(editForm.salaryMax),
+                salaryMin: editForm.isNegotiable ? null : (editForm.salaryMin === "" ? null : Number(editForm.salaryMin)),
+                salaryMax: editForm.isNegotiable ? null : (editForm.salaryMax === "" ? null : Number(editForm.salaryMax)),
+                currency: editForm.isNegotiable ? null : editForm.currency,
             };
             const res = await fetch(`/api/vacancies/${editingVacancy.id}`, {
                 method: "PUT",
@@ -280,7 +295,18 @@ export default function AdminDashboardPage() {
                                                 <h3 className="font-semibold text-sm">{v.title}</h3>
                                             </div>
                                             <p className="text-xs text-[var(--muted)]">{v.company.name} · {new Date(v.createdAt).toLocaleDateString("ru-RU")}</p>
-                                            {v.salary && <p className="text-xs font-medium mt-1">{v.salary}</p>}
+                                            {v.isNegotiable ? (
+                                                <p className="text-xs font-medium mt-1">Договорная зарплата</p>
+                                            ) : (
+                                                (v.salaryMin || v.salaryMax) && (
+                                                    <p className="text-xs font-medium mt-1">
+                                                        {v.salaryMin && `от ${v.salaryMin}`}
+                                                        {v.salaryMin && v.salaryMax && " "}
+                                                        {v.salaryMax && `до ${v.salaryMax}`}
+                                                        {v.currency && ` ${v.currency}`}
+                                                    </p>
+                                                )
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
@@ -342,10 +368,21 @@ export default function AdminDashboardPage() {
                                     </div>
 
                                     {/* Salary + Location */}
-                                    {(v.salary || v.location) && (
+                                    {(v.salaryMin || v.salaryMax || v.isNegotiable || v.location) && (
                                         <div className="text-xs text-[var(--muted)]">
-                                            {v.salary && <span className="font-medium text-[var(--foreground)]">{v.salary}</span>}
-                                            {v.salary && v.location && " · "}
+                                            {v.isNegotiable ? (
+                                                <span className="font-medium text-[var(--foreground)]">Договорная зарплата</span>
+                                            ) : (
+                                                (v.salaryMin || v.salaryMax) && (
+                                                    <span className="font-medium text-[var(--foreground)]">
+                                                        {v.salaryMin && `от ${v.salaryMin}`}
+                                                        {v.salaryMin && v.salaryMax && " "}
+                                                        {v.salaryMax && `до ${v.salaryMax}`}
+                                                        {v.currency && ` ${v.currency}`}
+                                                    </span>
+                                                )
+                                            )}
+                                            {(v.salaryMin || v.salaryMax || v.isNegotiable) && v.location && " · "}
                                             {v.location && <span>{v.location}</span>}
                                         </div>
                                     )}
@@ -470,23 +507,45 @@ export default function AdminDashboardPage() {
                                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none resize-none"
                                 />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-3 rounded-xl border border-[var(--border)] hover:bg-gray-100 transition-colors w-fit mb-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={editForm.isNegotiable}
+                                        onChange={(e) => {
+                                            const isChecked = e.target.checked;
+                                            setEditForm(prev => ({
+                                                ...prev,
+                                                isNegotiable: isChecked,
+                                                ...(isChecked ? { salaryMin: "", salaryMax: "" } : {})
+                                            }));
+                                        }}
+                                        className="w-4 h-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)] cursor-pointer"
+                                    />
+                                    <span className="text-sm font-medium select-none">Договорная зарплата</span>
+                                </label>
+                            </div>
+
+                            <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 transition-opacity ${editForm.isNegotiable ? 'opacity-50 pointer-events-none' : ''}`}>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">От</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Зарплата от</label>
                                     <input
                                         type="number"
                                         value={editForm.salaryMin}
                                         onChange={(e) => setEditForm({...editForm, salaryMin: e.target.value})}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+                                        disabled={editForm.isNegotiable}
+                                        className="w-full px-4 py-2 bg-gray-50 rounded-xl border-transparent focus:bg-white focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)] transition-all outline-none disabled:bg-gray-200"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">До</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Зарплата до</label>
                                     <input
                                         type="number"
                                         value={editForm.salaryMax}
                                         onChange={(e) => setEditForm({...editForm, salaryMax: e.target.value})}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+                                        disabled={editForm.isNegotiable}
+                                        className="w-full px-4 py-2 bg-gray-50 rounded-xl border-transparent focus:bg-white focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)] transition-all outline-none disabled:bg-gray-200"
                                     />
                                 </div>
                                 <div>

@@ -16,6 +16,7 @@ export default function NewVacancyPage() {
         salaryMin: "",
         salaryMax: "",
         currency: "RUB",
+        isNegotiable: false,
         schedule: "Полная занятость",
         employmentType: "Вакансия",
         location: "Якутск",
@@ -28,7 +29,18 @@ export default function NewVacancyPage() {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const { name, value, type } = e.target;
+        setForm(prev => {
+            const newForm = { ...prev, [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value };
+            
+            // If negotiable is checked, optionally clear out the UI fields immediately
+            if (name === "isNegotiable" && newForm.isNegotiable) {
+                newForm.salaryMin = "";
+                newForm.salaryMax = "";
+            }
+            
+            return newForm;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -130,7 +142,19 @@ export default function NewVacancyPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2">
+                            <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-3 rounded-xl border border-[var(--border)] hover:bg-gray-100 transition-colors w-fit">
+                                <input
+                                    type="checkbox"
+                                    name="isNegotiable"
+                                    checked={form.isNegotiable}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)] cursor-pointer"
+                                />
+                                <span className="text-sm font-medium select-none">Договорная зарплата</span>
+                            </label>
+                        </div>
+                        <div className={`sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 transition-opacity ${form.isNegotiable ? 'opacity-50 pointer-events-none' : ''}`}>
                             <div>
                                 <label htmlFor="vacancy-salary-min" className="block text-sm font-medium mb-1.5">
                                     Зарплата от
@@ -141,7 +165,8 @@ export default function NewVacancyPage() {
                                     type="number"
                                     value={form.salaryMin}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    disabled={form.isNegotiable}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] disabled:bg-gray-100"
                                     placeholder="25000"
                                 />
                             </div>
@@ -155,7 +180,8 @@ export default function NewVacancyPage() {
                                     type="number"
                                     value={form.salaryMax}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                    disabled={form.isNegotiable}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] disabled:bg-gray-100"
                                     placeholder="50000"
                                 />
                             </div>
@@ -168,7 +194,8 @@ export default function NewVacancyPage() {
                                     name="currency"
                                     value={form.currency}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white"
+                                    disabled={form.isNegotiable}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white disabled:bg-gray-100"
                                 >
                                     <option value="RUB">RUB (₽)</option>
                                     <option value="USD">USD ($)</option>
